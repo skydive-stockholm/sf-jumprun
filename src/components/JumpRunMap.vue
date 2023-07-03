@@ -36,8 +36,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-      <div :class="$style.map" id="map"></div>
+  <div :class="$style.map">
+      <img src="../assets/north-arrow.svg" alt="Compass" :class="$style.compass">
+      <div id="map" :class="$style.mapBox"></div>
   </div>
 </template>
 
@@ -45,5 +46,19 @@ onMounted(() => {
 .map {
     width: 100vw;
     height: 100vh;
+}
+
+.mapBox {
+    width: 100%;
+    height: 100%;
+}
+
+.compass {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 30px;
+    z-index: 100;
+    width: 150px;
 }
 </style>
