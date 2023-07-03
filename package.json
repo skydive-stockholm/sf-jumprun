@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "mapbox-gl": "^2.15.0",
     "vue": "^3.2.47"
   },
   "devDependencies": {
