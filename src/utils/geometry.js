@@ -1,5 +1,6 @@
 import turfCircle from "@turf/circle"
 import coordinates from '../data/coordinates.js'
+import * as turf from '@turf/turf'
 
 /**
  *
@@ -106,6 +107,39 @@ export const createCircleFeature = (map, nauticalMiles, color) => {
     });
 }
 
+var jrHelper = (start,end,shift,angle) => {
+	var p1 = turf.transformTranslate(turf.point(coordinates.gropen),start*1852,angle, { units: 'meters' });
+	var p2 = turf.transformTranslate(turf.point(coordinates.gropen),end*1852,angle, { units: 'meters' });
+	var jr = turf.lineString([p1.geometry.coordinates,p2.geometry.coordinates], {name: 'line 2'});
+	
+	return turf.transformTranslate(jr,shift*1852,angle+90, { units: 'meters' } );
+}
+
+export const createJumprunFeature = (map,start,end,shift,angle) => {
+	const id = "jumprun";
+
+	var jr = jrHelper(start,end,shift,angle);
+    map.addSource(id, {
+        'type': 'geojson',
+        'data': jr
+    });
+
+    // Add a new layer to visualize the polygon.
+    map.addLayer({
+        'id': id,
+        'type': 'line',
+        'source': id,
+        'layout': {},
+        'paint': getPaint('green-jr')
+    });
+}
+
+export const updateJumpRun = (map,start,end,shift,angle) => {
+	var jr = jrHelper(start,end,shift,angle);
+
+	map.getSource('jumprun').setData(jr)
+}
+
 const createCircle = (nauticalMiles = 0.1) => {
     const radius = nauticalMiles * 1852 // nautical miles in meters
     const options = {steps: 0, units: 'meters'}
@@ -119,6 +153,12 @@ const getPaint = (color) => {
             return primaryLine
         case 'black':
             return blackLine
+		case 'green-jr':
+			return greenJR;
+		case 'red-jr':
+			return redLine;
+		case 'yellow-jr':
+			return yellowJR
         default:
             return null
     }
@@ -133,5 +173,17 @@ const primaryLine = {
 const blackLine = {
     'line-width': 2,
     'line-color': '#000000',
+    'line-opacity': 0.5,
+}
+
+const greenJR = {
+    'line-width': 4,
+    'line-color': '#00ff00',
+    'line-opacity': 0.5,
+}
+
+const yellowJR = {
+    'line-width': 4,
+    'line-color': '#ffff00',
     'line-opacity': 0.5,
 }
