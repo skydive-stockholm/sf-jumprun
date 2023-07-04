@@ -8,7 +8,7 @@ import mapboxgl from 'mapbox-gl'
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
 
 // Application imports
-import {createCircleFeature} from "../utils/geometry.js";
+import {createCircleFeature, createLineFeature} from "../utils/geometry.js";
 import coordinates from '../data/coordinates.js'
 
 onMounted(() => {
@@ -30,6 +30,14 @@ onMounted(() => {
         createCircleFeature(map, 0.8, 'black')
         createCircleFeature(map, 0.9, 'black')
         createCircleFeature(map, 1, 'red')
+        createCircleFeature(map, 1.1, 'black')
+        createCircleFeature(map, 1.2, 'black')
+        createCircleFeature(map, 1.3, 'black')
+        createCircleFeature(map, 1.4, 'black')
+        createCircleFeature(map, 1.5, 'red')
+
+        createLineFeature(map, 'x')
+        createLineFeature(map, 'y')
     })
 })
 

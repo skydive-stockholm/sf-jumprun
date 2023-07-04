@@ -1,6 +1,49 @@
 import turfCircle from "@turf/circle"
 import coordinates from '../data/coordinates.js'
 
+export const createLineFeature = (map, direction) => {
+    const id = 'line-' + direction
+
+    let sourceCoordinates = []
+
+    if (direction === 'x') {
+        sourceCoordinates = [
+            [coordinates.gropen[0] + 0.0505, coordinates.gropen[1]],
+            [coordinates.gropen[0] - 0.0505, coordinates.gropen[1]],
+        ]
+    }
+
+    if (direction === 'y') {
+        sourceCoordinates = [
+            [coordinates.gropen[0], coordinates.gropen[1] + 0.0505],
+            [coordinates.gropen[0], coordinates.gropen[1] - 0.0505],
+        ]
+    }
+
+    map.addSource(id, {
+        'type': 'geojson',
+        'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': sourceCoordinates
+            }
+        }
+    });
+
+    map.addLayer({
+        'id': id,
+        'type': 'line',
+        'source': id,
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': redLine
+    });
+}
+
 export const createCircleFeature = (map, nauticalMiles, color) => {
     const circle = createCircle(nauticalMiles)
     const id = 'line-' + nauticalMiles.toString();
