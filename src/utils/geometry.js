@@ -1,6 +1,49 @@
 import turfCircle from "@turf/circle"
 import coordinates from '../data/coordinates.js'
 
+/**
+ *
+ * @param map
+ * @param x
+ * @param distance
+ */
+export const createLineOfFlightFeature = (map, x, distance) => {
+    const id = 'line-of-flight-arrow'
+    const lineDistance = 0.007;
+
+    const sourceCoordinates = [
+        [coordinates.gropen[0], coordinates.gropen[1] + lineDistance],
+        [coordinates.gropen[0], coordinates.gropen[1] - lineDistance],
+    ]
+
+    map.addSource(id, {
+        'type': 'geojson',
+        'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': sourceCoordinates
+            }
+        }
+    });
+
+    map.addLayer({
+        'id': id,
+        'type': 'line',
+        'source': id,
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-width': 6,
+            'line-color': '#dcec06',
+            'line-opacity': 1,
+        }
+    });
+}
+
 export const createLineFeature = (map, direction) => {
     const id = 'line-' + direction
 
@@ -40,13 +83,13 @@ export const createLineFeature = (map, direction) => {
             'line-join': 'round',
             'line-cap': 'round'
         },
-        'paint': redLine
+        'paint': primaryLine
     });
 }
 
 export const createCircleFeature = (map, nauticalMiles, color) => {
     const circle = createCircle(nauticalMiles)
-    const id = 'line-' + nauticalMiles.toString();
+    const id = 'circle-' + nauticalMiles.toString();
 
     map.addSource(id, {
         'type': 'geojson',
@@ -73,7 +116,7 @@ const createCircle = (nauticalMiles = 0.1) => {
 const getPaint = (color) => {
     switch (color) {
         case 'red':
-            return redLine
+            return primaryLine
         case 'black':
             return blackLine
         default:
@@ -81,10 +124,10 @@ const getPaint = (color) => {
     }
 }
 
-const redLine = {
-    'line-width': 4,
-    'line-color': '#ff0000',
-    'line-opacity': 0.5,
+const primaryLine = {
+    'line-width': 3,
+    'line-color': '#ff6d04',
+    'line-opacity': 0.7,
 }
 
 const blackLine = {
