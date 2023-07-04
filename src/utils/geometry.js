@@ -2,49 +2,6 @@ import turfCircle from "@turf/circle"
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
 
-/**
- *
- * @param map
- * @param x
- * @param distance
- */
-export const createLineOfFlightFeature = (map, x, distance) => {
-    const id = 'line-of-flight-arrow'
-    const lineDistance = 0.007;
-
-    const sourceCoordinates = [
-        [coordinates.gropen[0], coordinates.gropen[1] + lineDistance],
-        [coordinates.gropen[0], coordinates.gropen[1] - lineDistance],
-    ]
-
-    map.addSource(id, {
-        'type': 'geojson',
-        'data': {
-            'type': 'Feature',
-            'properties': {},
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': sourceCoordinates
-            }
-        }
-    });
-
-    map.addLayer({
-        'id': id,
-        'type': 'line',
-        'source': id,
-        'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
-        },
-        'paint': {
-            'line-width': 6,
-            'line-color': '#dcec06',
-            'line-opacity': 1,
-        }
-    });
-}
-
 export const createLineFeature = (map, direction) => {
     const id = 'line-' + direction
 
@@ -115,6 +72,14 @@ var jrHelper = (start,end,shift,angle) => {
 	return turf.transformTranslate(jr,shift*1852,angle+90, { units: 'meters' } );
 }
 
+/**
+ *
+ * @param map
+ * @param start
+ * @param end
+ * @param shift
+ * @param angle
+ */
 export const createJumprunFeature = (map,start,end,shift,angle) => {
 	const id = "jumprun";
 
@@ -129,8 +94,15 @@ export const createJumprunFeature = (map,start,end,shift,angle) => {
         'id': id,
         'type': 'line',
         'source': id,
-        'layout': {},
-        'paint': getPaint('green-jr')
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-width': 6,
+            'line-color': '#00ff00',
+            'line-opacity': 1,
+        }
     });
 }
 
@@ -153,12 +125,6 @@ const getPaint = (color) => {
             return primaryLine
         case 'black':
             return blackLine
-		case 'green-jr':
-			return greenJR;
-		case 'red-jr':
-			return redLine;
-		case 'yellow-jr':
-			return yellowJR
         default:
             return null
     }
@@ -173,17 +139,5 @@ const primaryLine = {
 const blackLine = {
     'line-width': 2,
     'line-color': '#000000',
-    'line-opacity': 0.5,
-}
-
-const greenJR = {
-    'line-width': 4,
-    'line-color': '#00ff00',
-    'line-opacity': 0.5,
-}
-
-const yellowJR = {
-    'line-width': 4,
-    'line-color': '#ffff00',
     'line-opacity': 0.5,
 }

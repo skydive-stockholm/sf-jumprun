@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl'
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
 
 // Application imports
-import {createCircleFeature, createLineFeature, createLineOfFlightFeature,createJumprunFeature,updateJumpRun} from "../utils/geometry.js";
+import {createCircleFeature, createLineFeature, createJumprunFeature,updateJumpRun} from "../utils/geometry.js";
 import coordinates from '../data/coordinates.js'
 
 onMounted(() => {
@@ -39,16 +39,15 @@ onMounted(() => {
 
         createLineFeature(map, 'x')
         createLineFeature(map, 'y')
-        createLineOfFlightFeature(map)
 		
-//		createJumprunFeature(map,-0.5,0.5,0,30);
+		createJumprunFeature(map,-0.5,0.5,0,30);
 
-//		setInterval(function(){
-//			axios.get("http://"+window.location.hostname+":8080/control.json")
-//			.then(response => {
-//				updateJumpRun(map,response.data.start/2048,response.data.end/2048,response.data.shift/4096,response.data.angle);
-//			});
-//		},100);
+		setInterval(function(){
+			axios.get("http://"+window.location.hostname+":8080/control.json")
+			.then(response => {
+				updateJumpRun(map,response.data.start/2048,response.data.end/2048,response.data.shift/4096,response.data.angle);
+			});
+		},100);
     })
 })
 
