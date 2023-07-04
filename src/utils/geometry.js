@@ -67,7 +67,9 @@ export const createCircleFeature = (map, nauticalMiles, color) => {
 var jrHelper = (start,end,shift,angle) => {
 	var p1 = turf.transformTranslate(turf.point(coordinates.gropen),start*1852,angle, { units: 'meters' });
 	var p2 = turf.transformTranslate(turf.point(coordinates.gropen),end*1852,angle, { units: 'meters' });
-	var jr = turf.lineString([p1.geometry.coordinates,p2.geometry.coordinates], {name: 'line 2'});
+	var p3 = turf.transformTranslate(p2,100,angle+150, { units: 'meters' });
+	var p4 = turf.transformTranslate(p3,100,angle-90, { units: 'meters' });
+	var jr = turf.lineString([p1.geometry.coordinates,p2.geometry.coordinates,p3.geometry.coordinates,p4.geometry.coordinates,p2.geometry.coordinates], {name: 'line 2'});
 	
 	return turf.transformTranslate(jr,shift*1852,angle+90, { units: 'meters' } );
 }

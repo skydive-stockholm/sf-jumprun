@@ -17,7 +17,7 @@ onMounted(() => {
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
         center: coordinates.gropen,
-        zoom: 14,
+        zoom: 13.5,
     });
 
     map.on('load', () => {
