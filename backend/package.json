@@ -1,11 +1,11 @@
 {
-  "name": "jumprun-backend",
-  "version": "0.0.1",
-  "description": "backend control for jumprun",
-  "dependencies": {
-    "@serialport/parser-readline": "^11.0.0",
-    "node-static": "^0.7.10",
-    "serialport": "^11.0.0",
-    "sse-stream": "0.0.5"
-  }
+    "name": "jumprun-backend",
+    "version": "0.0.1",
+    "description": "backend control for jumprun",
+    "dependencies": {
+        "@serialport/parser-readline": "^11.0.0",
+        "node-static": "^0.7.10",
+        "serialport": "^11.0.0",
+        "sse-stream": "0.0.5"
+    }
 }

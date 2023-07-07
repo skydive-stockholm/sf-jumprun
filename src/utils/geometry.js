@@ -1,7 +1,7 @@
-import turfCircle from "@turf/circle"
+import turfCircle from '@turf/circle'
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
-import mapboxgl from "mapbox-gl";
+import mapboxgl from 'mapbox-gl'
 
 export const createLineFeature = (map, direction) => {
     const id = 'line-' + direction
@@ -23,71 +23,92 @@ export const createLineFeature = (map, direction) => {
     }
 
     map.addSource(id, {
-        'type': 'geojson',
-        'data': {
-            'type': 'Feature',
-            'properties': {},
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': sourceCoordinates
-            }
-        }
-    });
+        type: 'geojson',
+        data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+                type: 'LineString',
+                coordinates: sourceCoordinates,
+            },
+        },
+    })
 
     map.addLayer({
-        'id': id,
-        'type': 'line',
-        'source': id,
-        'layout': {
+        id: id,
+        type: 'line',
+        source: id,
+        layout: {
             'line-join': 'round',
-            'line-cap': 'round'
+            'line-cap': 'round',
         },
-        'paint': primaryLine
-    });
+        paint: primaryLine,
+    })
 }
 
 export const createCircleFeature = (map, nauticalMiles, color) => {
     const circle = createCircle(nauticalMiles)
-    const id = 'circle-' + nauticalMiles.toString();
+    const id = 'circle-' + nauticalMiles.toString()
 
     map.addSource(id, {
-        'type': 'geojson',
-        'data': circle
-    });
+        type: 'geojson',
+        data: circle,
+    })
 
     // Add a new layer to visualize the polygon.
     map.addLayer({
-        'id': id,
-        'type': 'line',
-        'source': id,
-        'layout': {},
-        'paint': getPaint(color)
-    });
+        id: id,
+        type: 'line',
+        source: id,
+        layout: {},
+        paint: getPaint(color),
+    })
 }
 
-var jrHelper = (start,end,shift,angle) => {
-	var p1 = turf.transformTranslate(turf.point(coordinates.gropen),start*1852,angle, { units: 'meters' });
-	var p2 = turf.transformTranslate(turf.point(coordinates.gropen),end*1852,angle, { units: 'meters' });
-	var p3 = turf.transformTranslate(p2,100,angle+150, { units: 'meters' });
-	var p4 = turf.transformTranslate(p3,100,angle-90, { units: 'meters' });
-	var jr = turf.lineString([p1.geometry.coordinates,p2.geometry.coordinates,p3.geometry.coordinates,p4.geometry.coordinates,p2.geometry.coordinates], {name: 'line 2'});
+const jrHelper = (start, end, shift, angle) => {
+    const p1 = turf.transformTranslate(
+        turf.point(coordinates.gropen),
+        start * 1852,
+        angle,
+        { units: 'meters' },
+    )
+    const p2 = turf.transformTranslate(
+        turf.point(coordinates.gropen),
+        end * 1852,
+        angle,
+        { units: 'meters' },
+    )
+    const p3 = turf.transformTranslate(p2, 100, angle + 150, {
+        units: 'meters',
+    })
+    const p4 = turf.transformTranslate(p3, 100, angle - 90, { units: 'meters' })
+    const jr = turf.lineString(
+        [
+            p1.geometry.coordinates,
+            p2.geometry.coordinates,
+            p3.geometry.coordinates,
+            p4.geometry.coordinates,
+            p2.geometry.coordinates,
+        ],
+        { name: 'line 2' },
+    )
 
-	return turf.transformTranslate(jr,shift*1852,angle+90, { units: 'meters' } );
+    return turf.transformTranslate(jr, shift * 1852, angle + 90, {
+        units: 'meters',
+    })
 }
 
 function createTextFeature(map, text, coordinates) {
-    const el = document.createElement('div');
-    el.innerHTML = text;
-    el.className = 'marker';
-    el.style.color = 'white';
-    el.style.margin = '20px';
-    el.style.fontSize = '20px';
-    el.style.textShadow = '2px 2px 4px #000000';
+    const el = document.createElement('div')
+    el.innerHTML = text
+    el.className = 'marker'
+    el.style.color = 'white'
+    el.style.margin = '20px'
+    el.style.fontSize = '20px'
+    el.style.textShadow = '2px 2px 4px #000000'
 
     // make a marker for each feature and add it to the map
-    new mapboxgl.Marker(el)
-        .setLngLat(coordinates)
-        .addTo(map);
+    new mapboxgl.Marker(el).setLngLat(coordinates).addTo(map)
 }
 
 /**
@@ -98,48 +119,48 @@ function createTextFeature(map, text, coordinates) {
  * @param shift
  * @param angle
  */
-export const createJumprunFeature = (map,start,end,shift,angle) => {
-	const id = "jumprun";
+export const createJumprunFeature = (map, start, end, shift, angle) => {
+    const id = 'jumprun'
 
-	var jr = jrHelper(start,end,shift,angle);
+    const jr = jrHelper(start, end, shift, angle)
     map.addSource(id, {
-        'type': 'geojson',
-        'data': jr
-    });
+        type: 'geojson',
+        data: jr,
+    })
 
-    createTextFeature(map, '55s', jr.geometry.coordinates[0]);
+    createTextFeature(map, '55s', jr.geometry.coordinates[0])
 
     // Add a new layer to visualize the polygon.
     map.addLayer({
-        'id': id,
-        'type': 'line',
-        'source': id,
-        'layout': {
+        id: id,
+        type: 'line',
+        source: id,
+        layout: {
             'line-join': 'round',
-            'line-cap': 'round'
+            'line-cap': 'round',
         },
-        'paint': {
+        paint: {
             'line-width': 6,
             'line-color': '#00ff00',
             'line-opacity': 1,
-        }
-    });
+        },
+    })
 }
 
-export const updateJumpRun = (map,start,end,shift,angle) => {
-	var jr = jrHelper(start,end,shift,angle);
+export const updateJumpRun = (map, start, end, shift, angle) => {
+    const jr = jrHelper(start, end, shift, angle)
 
-	map.getSource('jumprun').setData(jr)
+    map.getSource('jumprun').setData(jr)
 }
 
 const createCircle = (nauticalMiles = 0.1) => {
     const radius = nauticalMiles * 1852 // nautical miles in meters
-    const options = {steps: 0, units: 'meters'}
+    const options = { steps: 0, units: 'meters' }
 
     return turfCircle(coordinates.gropen, radius, options)
 }
 
-const getPaint = (color) => {
+const getPaint = color => {
     switch (color) {
         case 'red':
             return primaryLine
