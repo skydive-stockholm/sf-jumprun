@@ -1,10 +1,9 @@
 <script setup>
-import JumpRunMap from './components/JumpRunMap.vue'
+import JumpRunMap from "./components/JumpRunMap.vue";
 </script>
 
 <template>
   <JumpRunMap />
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
