@@ -1,6 +1,7 @@
 import turfCircle from "@turf/circle"
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
+import mapboxgl from "mapbox-gl";
 
 export const createLineFeature = (map, direction) => {
     const id = 'line-' + direction
@@ -16,8 +17,8 @@ export const createLineFeature = (map, direction) => {
 
     if (direction === 'y') {
         sourceCoordinates = [
-            [coordinates.gropen[0], coordinates.gropen[1] + 0.0505],
-            [coordinates.gropen[0], coordinates.gropen[1] - 0.0505],
+            [coordinates.gropen[0], coordinates.gropen[1] + 0.025],
+            [coordinates.gropen[0], coordinates.gropen[1] - 0.025],
         ]
     }
 
@@ -70,8 +71,23 @@ var jrHelper = (start,end,shift,angle) => {
 	var p3 = turf.transformTranslate(p2,100,angle+150, { units: 'meters' });
 	var p4 = turf.transformTranslate(p3,100,angle-90, { units: 'meters' });
 	var jr = turf.lineString([p1.geometry.coordinates,p2.geometry.coordinates,p3.geometry.coordinates,p4.geometry.coordinates,p2.geometry.coordinates], {name: 'line 2'});
-	
+
 	return turf.transformTranslate(jr,shift*1852,angle+90, { units: 'meters' } );
+}
+
+function createTextFeature(map, text, coordinates) {
+    const el = document.createElement('div');
+    el.innerHTML = text;
+    el.className = 'marker';
+    el.style.color = 'white';
+    el.style.margin = '20px';
+    el.style.fontSize = '20px';
+    el.style.textShadow = '2px 2px 4px #000000';
+
+    // make a marker for each feature and add it to the map
+    new mapboxgl.Marker(el)
+        .setLngLat(coordinates)
+        .addTo(map);
 }
 
 /**
@@ -90,6 +106,8 @@ export const createJumprunFeature = (map,start,end,shift,angle) => {
         'type': 'geojson',
         'data': jr
     });
+
+    createTextFeature(map, '55s', jr.geometry.coordinates[0]);
 
     // Add a new layer to visualize the polygon.
     map.addLayer({
