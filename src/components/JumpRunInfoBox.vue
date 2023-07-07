@@ -1,0 +1,47 @@
+<template>
+    <section :class="$style.infoBox">
+        <div :class="$style.phoneNumber">
+            <strong>Tel manifest:</strong> 076 135 43 85
+        </div>
+
+        <div>
+            <div>
+                <strong>Jump leader:</strong>
+                {{ staff.jumpLeader }}
+            </div>
+
+            <div>
+                <strong>Manifestor:</strong>
+                {{ staff.manifestor }}
+            </div>
+
+            <div><strong>Pilot:</strong> {{ staff.pilot }}</div>
+        </div>
+    </section>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const staff = ref({
+    jumpLeader: 'Stefan Burström',
+    manifestor: 'Felix Holmertz',
+    pilot: 'Andreas Henriksson',
+})
+</script>
+
+<style module>
+.infoBox {
+    position: fixed;
+    z-index: 10;
+    background: #fff;
+    color: #000;
+    padding: 20px 15px;
+    bottom: 0;
+    border-top-right-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+}
+</style>

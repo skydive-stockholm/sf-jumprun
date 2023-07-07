@@ -6,17 +6,18 @@ import axios from 'axios'
 // Mapbox imports
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
-mapboxgl.accessToken =
-    'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
-
 // Application imports
 import {
     createCircleFeature,
-    createLineFeature,
     createJumprunFeature,
+    createLineFeature,
     updateJumpRun,
 } from '../utils/geometry.js'
 import coordinates from '../data/coordinates.js'
+import JumpRunInfoBox from './JumpRunInfoBox.vue'
+
+mapboxgl.accessToken =
+    'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
 
 onMounted(() => {
     const map = new mapboxgl.Map({
@@ -74,6 +75,9 @@ onMounted(() => {
             alt="Compass"
             :class="$style.compass"
         />
+
+        <JumpRunInfoBox />
+
         <div id="map" :class="$style.mapBox"></div>
     </div>
 </template>
@@ -96,5 +100,16 @@ onMounted(() => {
     margin: 30px;
     z-index: 100;
     width: 150px;
+}
+
+.infoBox {
+    position: fixed;
+    z-index: 10;
+    background: #fff;
+    color: #000;
+    padding: 20px 15px;
+    bottom: 0;
+    border-top-right-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 </style>
