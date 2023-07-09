@@ -27,6 +27,7 @@
         ]
     },
     "dependencies": {
+        "@heroicons/vue": "^2.0.18",
         "@turf/circle": "^6.5.0",
         "@turf/turf": "^6.5.0",
         "axios": "^1.4.0",
