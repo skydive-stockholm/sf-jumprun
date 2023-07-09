@@ -1,6 +1,6 @@
 <script setup>
 // Vue imports
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import axios from 'axios'
 
 // Mapbox imports
@@ -19,51 +19,58 @@ import JumpRunInfoBox from './JumpRunInfoBox.vue'
 mapboxgl.accessToken =
     'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
 
+const map = ref(null)
+
+const controlHandler = () => {
+    axios
+        .get('http://' + window.location.hostname + ':8080/control.json')
+        .then(response => {
+            updateJumpRun(
+                map.value,
+                response.data.start / 2048,
+                response.data.end / 2048,
+                response.data.shift / 4096,
+                response.data.angle,
+            )
+        })
+}
+
 onMounted(() => {
-    const map = new mapboxgl.Map({
+    map.value = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
         center: coordinates.gropen,
         zoom: 13.5,
     })
 
-    map.on('load', () => {
-        createCircleFeature(map, 0.1, 'black')
-        createCircleFeature(map, 0.2, 'black')
-        createCircleFeature(map, 0.3, 'black')
-        createCircleFeature(map, 0.4, 'black')
-        createCircleFeature(map, 0.5, 'red')
-        createCircleFeature(map, 0.6, 'black')
-        createCircleFeature(map, 0.7, 'black')
-        createCircleFeature(map, 0.8, 'black')
-        createCircleFeature(map, 0.9, 'black')
-        createCircleFeature(map, 1, 'red')
-        createCircleFeature(map, 1.1, 'black')
-        createCircleFeature(map, 1.2, 'black')
-        createCircleFeature(map, 1.3, 'black')
-        createCircleFeature(map, 1.4, 'black')
-        createCircleFeature(map, 1.5, 'red')
+    map.value.on('load', () => {
+        createCircleFeature(map.value, 0.1, 'black')
+        createCircleFeature(map.value, 0.2, 'black')
+        createCircleFeature(map.value, 0.3, 'black')
+        createCircleFeature(map.value, 0.4, 'black')
+        createCircleFeature(map.value, 0.5, 'red')
+        createCircleFeature(map.value, 0.6, 'black')
+        createCircleFeature(map.value, 0.7, 'black')
+        createCircleFeature(map.value, 0.8, 'black')
+        createCircleFeature(map.value, 0.9, 'black')
+        createCircleFeature(map.value, 1, 'red')
+        createCircleFeature(map.value, 1.1, 'black')
+        createCircleFeature(map.value, 1.2, 'black')
+        createCircleFeature(map.value, 1.3, 'black')
+        createCircleFeature(map.value, 1.4, 'black')
+        createCircleFeature(map.value, 1.5, 'red')
 
-        createLineFeature(map, 'x')
-        createLineFeature(map, 'y')
+        createLineFeature(map.value, 'x')
+        createLineFeature(map.value, 'y')
 
-        createJumprunFeature(map, -0.5, 0.5, 0, 30)
+        createJumprunFeature(map.value, -0.5, 0.5, 0, 30)
 
-        setInterval(function () {
-            axios
-                .get(
-                    'http://' + window.location.hostname + ':8080/control.json',
-                )
-                .then(response => {
-                    updateJumpRun(
-                        map,
-                        response.data.start / 2048,
-                        response.data.end / 2048,
-                        response.data.shift / 4096,
-                        response.data.angle,
-                    )
-                })
-        }, 100)
+        setInterval(controlHandler, 100)
+    })
+
+    onUnmounted(() => {
+        map.value.remove()
+        clearInterval(controlHandler)
     })
 })
 </script>
