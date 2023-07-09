@@ -5,7 +5,8 @@
         </div>
 
         <div :class="$style.phoneNumber">
-            <strong>Tel manifest:</strong> 076 135 43 85
+            <strong>Manifest phone:</strong>
+            +4676 135 43 85
         </div>
 
         <div>
