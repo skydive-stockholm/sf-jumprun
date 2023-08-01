@@ -26,19 +26,32 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import axios from 'axios'
 
 const staff = ref({
-    jumpLeader: 'Stefan Burström',
-    manifestor: 'Felix Holmertz',
-    pilot: 'Andreas Henriksson',
+    jumpLeader: '',
+    manifestor: '',
+    pilot: '',
 })
 
 const lastGust = ref(null)
 
-axios.get('https://insidan.skydive.se/api/weather').then(res => {
-    lastGust.value = res.data.lastGust30Min
+const fetchData = () => {
+    axios.get('https://insidan.skydive.se/api/weather').then(res => {
+        lastGust.value = res.data.lastGust30Min
+    })
+
+    axios.get('http://localhost:3008/api/storage').then(res => {
+        staff.value = res.data.staff
+    })
+}
+
+fetchData()
+setInterval(fetchData, 1000 * 10)
+
+onUnmounted(() => {
+    clearInterval(fetchData)
 })
 </script>
 

@@ -15,6 +15,16 @@ import {
 } from '../utils/geometry.js'
 import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
+import AdminPanel from '../AdminPanel.vue'
+
+const adminDialog = ref(null)
+const toggleAdminDialog = () => {
+    if (adminDialog.value.open) {
+        adminDialog.value.close()
+    } else {
+        adminDialog.value.showModal()
+    }
+}
 
 mapboxgl.accessToken =
     'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
@@ -22,17 +32,16 @@ mapboxgl.accessToken =
 const map = ref(null)
 
 const controlHandler = () => {
-    axios
-        .get('http://' + window.location.hostname + ':8080/control.json')
-        .then(response => {
-            updateJumpRun(
-                map.value,
-                response.data.start / 2048,
-                response.data.end / 2048,
-                response.data.shift / 4096,
-                response.data.angle,
-            )
-        })
+    axios.get('http://127.0.0.1:3008/api/storage').then(response => {
+        console.log(response)
+        updateJumpRun(
+            map.value,
+            response.data.jumprun.start,
+            response.data.jumprun.end,
+            response.data.jumprun.shift,
+            response.data.jumprun.angle,
+        )
+    })
 }
 
 onMounted(() => {
@@ -65,7 +74,7 @@ onMounted(() => {
 
         createJumprunFeature(map.value, -0.5, 0.5, 0, 30)
 
-        setInterval(controlHandler, 100)
+        setInterval(controlHandler, 500)
     })
 
     onUnmounted(() => {
@@ -82,6 +91,16 @@ onMounted(() => {
             alt="Compass"
             :class="$style.compass"
         />
+
+        <!-- A modal dialog containing a form -->
+        <dialog ref="adminDialog" :class="$style.adminDialog">
+            <form>
+                <AdminPanel @cancel="toggleAdminDialog" />
+            </form>
+        </dialog>
+        <button :class="$style.openAdminDialog" @click="toggleAdminDialog">
+            Admin
+        </button>
 
         <JumpRunInfoBox />
 
@@ -118,5 +137,27 @@ onMounted(() => {
     bottom: 0;
     border-top-right-radius: 6px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.adminDialog {
+    z-index: 1000;
+    position: fixed;
+    border: 0;
+    border-bottom-right-radius: 8px;
+    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.adminDialog::backdrop {
+    background-color: rgba(0, 0, 0, 0);
+    pointer-events: auto;
+    display: none;
+}
+
+.openAdminDialog {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 20px;
+    z-index: 100;
 }
 </style>
