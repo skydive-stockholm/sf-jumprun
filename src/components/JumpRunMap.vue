@@ -104,6 +104,12 @@ onMounted(() => {
 
         <JumpRunInfoBox />
 
+        <iframe
+            :class="$style.forecast"
+            src="https://www.yr.no/en/content/2-2710090/card.html"
+            frameborder="0"
+        ></iframe>
+
         <div id="map" :class="$style.mapBox"></div>
     </div>
 </template>
@@ -125,7 +131,7 @@ onMounted(() => {
     right: 0;
     margin: 30px;
     z-index: 100;
-    width: 150px;
+    width: 120px;
 }
 
 .infoBox {
@@ -159,5 +165,13 @@ onMounted(() => {
     left: 0;
     margin: 20px;
     z-index: 100;
+}
+
+.forecast {
+    position: fixed;
+    z-index: 100;
+    width: 320px;
+    height: 345px;
+    border-bottom-right-radius: 8px;
 }
 </style>
