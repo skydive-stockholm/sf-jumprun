@@ -10,15 +10,9 @@ const data = reactive({
         jumpLeader: '',
         pilot: '',
     },
-    jumprun: {
-        start: -0.5,
-        end: 0.5,
-        shift: 0,
-        angle: 30,
-    },
 })
 
-axios.get('http://127.0.0.1:3008/api/storage').then(res => {
+axios.get(`http://${import.meta.env.VITE_HOST}:3008/api/storage`).then(res => {
     if (res.data.staff) {
         data.staff = res.data.staff
     }
@@ -29,7 +23,7 @@ axios.get('http://127.0.0.1:3008/api/storage').then(res => {
 })
 
 const save = () => {
-    axios.post('http://127.0.0.1:3008/api/storage', data)
+    axios.post(`http://${import.meta.env.VITE_HOST}:3008/api/storage`, data)
 }
 </script>
 
@@ -51,54 +45,54 @@ const save = () => {
                 <input v-model="data.staff.pilot" type="text" />
             </label>
 
-            <div :class="$style.jumprunSliders">
-                <label>
-                    Start
-                    <input
-                        v-model.number="data.jumprun.start"
-                        min="-4"
-                        max="4"
-                        step="0.1"
-                        type="range"
-                    />
-                    {{ data.jumprun.start }}nm
-                </label>
+            <!--            <div :class="$style.jumprunSliders">-->
+            <!--                <label>-->
+            <!--                    Start-->
+            <!--                    <input-->
+            <!--                        v-model.number="data.jumprun.start"-->
+            <!--                        min="-4"-->
+            <!--                        max="4"-->
+            <!--                        step="0.1"-->
+            <!--                        type="range"-->
+            <!--                    />-->
+            <!--                    {{ data.jumprun.start }}nm-->
+            <!--                </label>-->
 
-                <label>
-                    End
-                    <input
-                        v-model.number="data.jumprun.end"
-                        min="-4"
-                        max="4"
-                        step="0.1"
-                        type="range"
-                    />
-                    {{ data.jumprun.end }}nm
-                </label>
+            <!--                <label>-->
+            <!--                    End-->
+            <!--                    <input-->
+            <!--                        v-model.number="data.jumprun.end"-->
+            <!--                        min="-4"-->
+            <!--                        max="4"-->
+            <!--                        step="0.1"-->
+            <!--                        type="range"-->
+            <!--                    />-->
+            <!--                    {{ data.jumprun.end }}nm-->
+            <!--                </label>-->
 
-                <label>
-                    Shift
-                    <input
-                        v-model.number="data.jumprun.shift"
-                        min="-0.5"
-                        max="0.5"
-                        step="0.01"
-                        type="range"
-                    />
-                    {{ data.jumprun.shift }}nm
-                </label>
+            <!--                <label>-->
+            <!--                    Shift-->
+            <!--                    <input-->
+            <!--                        v-model.number="data.jumprun.shift"-->
+            <!--                        min="-0.5"-->
+            <!--                        max="0.5"-->
+            <!--                        step="0.01"-->
+            <!--                        type="range"-->
+            <!--                    />-->
+            <!--                    {{ data.jumprun.shift }}nm-->
+            <!--                </label>-->
 
-                <label>
-                    Angle
-                    <input
-                        v-model.number="data.jumprun.angle"
-                        min="0"
-                        max="360"
-                        type="range"
-                    />
-                    {{ data.jumprun.angle }}°
-                </label>
-            </div>
+            <!--                <label>-->
+            <!--                    Angle-->
+            <!--                    <input-->
+            <!--                        v-model.number="data.jumprun.angle"-->
+            <!--                        min="0"-->
+            <!--                        max="360"-->
+            <!--                        type="range"-->
+            <!--                    />-->
+            <!--                    {{ data.jumprun.angle }}°-->
+            <!--                </label>-->
+            <!--            </div>-->
 
             <button :class="$style.button" type="submit">Save</button>
             <button

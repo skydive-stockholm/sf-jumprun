@@ -1,8 +1,6 @@
 <script setup>
 // Vue imports
 import { onMounted, onUnmounted, ref } from 'vue'
-import axios from 'axios'
-
 // Mapbox imports
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
@@ -17,7 +15,13 @@ import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
 
+// Is the server events connection open?
+const isConnected = ref(false)
+// Admin dialog element reference
 const adminDialog = ref(null)
+const isAdmin = import.meta.env.VITE_ADMIN === 'true'
+const map = ref(null)
+const data = ref(null)
 const toggleAdminDialog = () => {
     if (adminDialog.value.open) {
         adminDialog.value.close()
@@ -26,60 +30,96 @@ const toggleAdminDialog = () => {
     }
 }
 
-mapboxgl.accessToken =
-    'pk.eyJ1Ijoic2t5ZGl2ZXN0b2NraG9sbSIsImEiOiJjbGptenN0OXIwMXNzM3VxaWNhYXptZWkzIn0.W18BZYntAkco7TaPL9XtOw'
+data.value = {
+    staff: {
+        manifestor: '',
+        jumpLeader: '',
+        pilot: '',
+    },
+    jumprun: {
+        start: 0,
+        end: 0,
+        shift: 0,
+        angle: 0,
+    },
+}
 
-const map = ref(null)
+function initMap() {
+    const viteMapboxApiKey = import.meta.env.VITE_MAPBOX_API_KEY
 
-const controlHandler = () => {
-    axios.get('http://127.0.0.1:3008/api/storage').then(response => {
-        console.log(response)
-        updateJumpRun(
-            map.value,
-            response.data.jumprun.start,
-            response.data.jumprun.end,
-            response.data.jumprun.shift,
-            response.data.jumprun.angle,
-        )
+    if (!viteMapboxApiKey) {
+        throw new Error('Environment variable VITE_MAPBOX_API_KEY is not set')
+    }
+
+    mapboxgl.accessToken = viteMapboxApiKey
+
+    return new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        center: coordinates.mapCenter,
+        zoom: 13.5,
     })
 }
 
+function initServerEvents(onUpdate) {
+    const evtSource = new EventSource('http://localhost:3008/subscribe')
+
+    evtSource.onopen = () => {
+        isConnected.value = true
+    }
+
+    evtSource.onerror = () => {
+        isConnected.value = false
+    }
+
+    evtSource.onmessage = event => {
+        onUpdate(JSON.parse(event.data), event)
+    }
+
+    return evtSource
+}
+
+function initMapFeatures(map) {
+    // Create circles with 0.1 nautical miles in between each one
+    for (let i = 0.1; i <= 1.5; i = i + 0.1) {
+        let color = 'black'
+        if (i === 0.5 || i === 1 || i === 1.5) {
+            color = 'red'
+        }
+        createCircleFeature(map, i, color)
+    }
+
+    // Create lines for x and y axis
+    ;['x', 'y'].forEach(axis => createLineFeature(map, axis))
+
+    // Create jumprun arrow
+    createJumprunFeature(map, 0, 0, 0, 30)
+}
+const eventSource = ref(null)
 onMounted(() => {
-    map.value = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/satellite-streets-v12',
-        center: coordinates.gropen,
-        zoom: 13.5,
-    })
-
+    map.value = initMap()
     map.value.on('load', () => {
-        createCircleFeature(map.value, 0.1, 'black')
-        createCircleFeature(map.value, 0.2, 'black')
-        createCircleFeature(map.value, 0.3, 'black')
-        createCircleFeature(map.value, 0.4, 'black')
-        createCircleFeature(map.value, 0.5, 'red')
-        createCircleFeature(map.value, 0.6, 'black')
-        createCircleFeature(map.value, 0.7, 'black')
-        createCircleFeature(map.value, 0.8, 'black')
-        createCircleFeature(map.value, 0.9, 'black')
-        createCircleFeature(map.value, 1, 'red')
-        createCircleFeature(map.value, 1.1, 'black')
-        createCircleFeature(map.value, 1.2, 'black')
-        createCircleFeature(map.value, 1.3, 'black')
-        createCircleFeature(map.value, 1.4, 'black')
-        createCircleFeature(map.value, 1.5, 'red')
+        initMapFeatures(map.value)
+        eventSource.value = initServerEvents(res => {
+            data.value = res
 
-        createLineFeature(map.value, 'x')
-        createLineFeature(map.value, 'y')
+            if (!data.value.jumprun) {
+                return
+            }
 
-        createJumprunFeature(map.value, -0.5, 0.5, 0, 30)
-
-        setInterval(controlHandler, 500)
+            updateJumpRun(
+                map.value,
+                data.value.jumprun.start,
+                data.value.jumprun.end,
+                data.value.jumprun.shift,
+                data.value.jumprun.angle,
+            )
+        })
     })
 
     onUnmounted(() => {
+        eventSource.value.close()
         map.value.remove()
-        clearInterval(controlHandler)
     })
 })
 </script>
@@ -98,17 +138,32 @@ onMounted(() => {
                 <AdminPanel @cancel="toggleAdminDialog" />
             </form>
         </dialog>
-        <button :class="$style.openAdminDialog" @click="toggleAdminDialog">
-            Admin
-        </button>
 
-        <JumpRunInfoBox />
+        <JumpRunInfoBox :staff="data.staff" :jumprun="data.jumprun">
+            <button
+                v-if="isAdmin"
+                :class="$style.openAdminDialog"
+                @click="toggleAdminDialog"
+            >
+                Change staff
+            </button>
+        </JumpRunInfoBox>
 
         <iframe
             :class="$style.forecast"
             src="https://www.yr.no/en/content/2-2710090/card.html"
-            frameborder="0"
         ></iframe>
+
+        <div v-if="isConnected" :class="$style.connectionMessage">
+            <div :class="[$style.connectionDot, $style.active]"></div>
+
+            Connected
+        </div>
+        <div v-else :class="$style.connectionMessage">
+            <div :class="[$style.connectionDot, $style.inactive]"></div>
+
+            Not connected
+        </div>
 
         <div id="map" :class="$style.mapBox"></div>
     </div>
@@ -134,17 +189,6 @@ onMounted(() => {
     width: 120px;
 }
 
-.infoBox {
-    position: fixed;
-    z-index: 10;
-    background: #fff;
-    color: #000;
-    padding: 20px 15px;
-    bottom: 0;
-    border-top-right-radius: 6px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
 .adminDialog {
     z-index: 1000;
     position: fixed;
@@ -159,19 +203,35 @@ onMounted(() => {
     display: none;
 }
 
-.openAdminDialog {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin: 20px;
-    z-index: 100;
-}
-
 .forecast {
     position: fixed;
     z-index: 100;
     width: 320px;
     height: 345px;
     border-bottom-right-radius: 8px;
+    top: -55px;
+    border: 0;
+}
+
+.connectionMessage {
+    position: fixed;
+    z-index: 1000;
+    bottom: 30px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
+}
+
+.connectionDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+}
+
+.connectionDot.active {
+    background-color: green;
 }
 </style>

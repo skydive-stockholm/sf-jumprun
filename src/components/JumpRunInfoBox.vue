@@ -1,10 +1,10 @@
 <template>
     <section :class="$style.infoBox">
-        <div :class="$style.lastGust">
-            <strong>Last gust (30 min):</strong> {{ lastGust }}
-        </div>
+        <slot />
 
-        <div :class="$style.phoneNumber">
+        <div><strong>Last gust (30 min):</strong> {{ lastGust }}</div>
+
+        <div>
             <strong>Manifest phone:</strong>
             +4676 135 43 85
         </div>
@@ -22,6 +22,21 @@
 
             <div><strong>Pilot:</strong> {{ staff.pilot }}</div>
         </div>
+
+        <div>
+            <div>
+                <strong>Green light:</strong>
+                {{ jumprun.start }} nm
+            </div>
+            <div>
+                <strong>Red light:</strong>
+                {{ jumprun.end }} nm
+            </div>
+            <div>
+                <strong>Heading:</strong>
+                {{ jumprun.angle }}°
+            </div>
+        </div>
     </section>
 </template>
 
@@ -29,29 +44,30 @@
 import { onUnmounted, ref } from 'vue'
 import axios from 'axios'
 
-const staff = ref({
-    jumpLeader: '',
-    manifestor: '',
-    pilot: '',
+defineProps({
+    staff: {
+        type: Object,
+        required: true,
+    },
+    jumprun: {
+        type: Object,
+        required: true,
+    },
 })
 
 const lastGust = ref(null)
 
 const fetchData = () => {
-    axios.get('https://insidan.skydive.se/api/weather').then(res => {
+    return axios.get('https://insidan.skydive.se/api/weather').then(res => {
         lastGust.value = res.data.lastGust30Min
-    })
-
-    axios.get('http://localhost:3008/api/storage').then(res => {
-        staff.value = res.data.staff
     })
 }
 
 fetchData()
-setInterval(fetchData, 1000 * 10)
+const fetcherIntervalId = setInterval(fetchData, 1000)
 
 onUnmounted(() => {
-    clearInterval(fetchData)
+    clearInterval(fetcherIntervalId)
 })
 </script>
 
@@ -68,8 +84,6 @@ onUnmounted(() => {
     display: flex;
     gap: 20px;
     flex-direction: column;
-}
-
-.lastGust {
+    width: 320px;
 }
 </style>
