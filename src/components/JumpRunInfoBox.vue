@@ -1,5 +1,7 @@
 <template>
     <section :class="$style.infoBox">
+        <!--        <button @click.prevent="initSerialPort">Find serial</button>-->
+
         <slot />
 
         <div><strong>Last gust (30 min):</strong> {{ lastGust }}</div>
@@ -26,11 +28,11 @@
         <div>
             <div>
                 <strong>Green light:</strong>
-                {{ jumprun.start }} nm
+                {{ jumprun.start.toFixed(2) }} nm
             </div>
             <div>
                 <strong>Red light:</strong>
-                {{ jumprun.end }} nm
+                {{ jumprun.end.toFixed(2) }} nm
             </div>
             <div>
                 <strong>Heading:</strong>
@@ -69,6 +71,42 @@ const fetcherIntervalId = setInterval(fetchData, 1000)
 onUnmounted(() => {
     clearInterval(fetcherIntervalId)
 })
+
+// const initSerialPort = async () => {
+//     const port = await navigator.serial.requestPort()
+//     await port.open({ baudRate: 2400 })
+//
+//     console.log('connected', port)
+//
+//     // eslint-disable-next-line
+//     const textDecoder = new TextDecoderStream()
+//     // eslint-disable-next-line
+//     const readableStreamClosed = port.readable.pipeTo(textDecoder.writable)
+//     const reader = textDecoder.readable.getReader()
+//
+//     // Listen to data coming from the serial device.
+//     // eslint-disable-next-line
+//     while (true) {
+//         const { value, done } = await reader.read()
+//         if (done) {
+//             // Allow the serial port to be closed later.
+//             reader.releaseLock()
+//             break
+//         }
+//
+//         let string = value
+//
+//         string = string.replace(/ /g, '"')
+//         string = string.replace(/:/g, '":')
+//         string = string.replace(/"}/, '}')
+//
+//         console.log(JSON.parse(string))
+//     }
+//
+//     console.log('foo')
+//
+//     console.log(port)
+// }
 </script>
 
 <style module>

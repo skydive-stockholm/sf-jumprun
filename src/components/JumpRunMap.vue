@@ -14,6 +14,7 @@ import {
 import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
+import axios from 'axios'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -70,11 +71,22 @@ function initServerEvents(onUpdate) {
 
     evtSource.onerror = () => {
         isConnected.value = false
+        evtSource.close()
     }
 
     evtSource.onmessage = event => {
         onUpdate(JSON.parse(event.data), event)
     }
+
+    // Fallback to server events
+    setInterval(async () => {
+        if (isConnected.value === true) {
+            return
+        }
+
+        const res = await axios.get('http://localhost:3008/api/storage')
+        onUpdate(res.data)
+    }, 1000 * 5)
 
     return evtSource
 }

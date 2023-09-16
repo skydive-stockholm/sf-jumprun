@@ -10,7 +10,7 @@
         "format": "prettier .  --write",
         "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
         "admin": "node backend/admin.js",
-        "backend": "nodemon backend/backend.js"
+        "backend": "nodemon backend/backend.js --ignore 'data.json'"
     },
     "husky": {
         "hooks": {

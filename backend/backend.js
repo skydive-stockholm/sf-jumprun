@@ -82,41 +82,54 @@ app.listen(port, () => {
     console.log(`Jump run app listening on port ${port}`)
 })
 
-const serialPort = new serialport.SerialPort(
-    {
-        path: 'COM4',
-        baudRate: 9600,
-        autoOpen: true,
-    },
-    function (err) {
-        if (err) {
-            return console.log('Error: ', err.message)
+serialport.SerialPort.list().then(res => {
+    console.log(res)
+
+    res.find(port => {
+        if (port.serialNumber === '2096326F4D53') {
+            console.log('Found port')
+
+            const serialPort = new serialport.SerialPort(
+                {
+                    path: port.path,
+                    baudRate: 9600,
+                    autoOpen: true,
+                },
+                function (err) {
+                    if (err) {
+                        return console.log('Error: ', err.message)
+                    }
+                },
+            )
+
+            const parser = serialPort.pipe(
+                new ReadlineParser({ delimiter: '\n' }),
+            )
+
+            parser.on('data', chunk => {
+                // Silly bugfix for incorrect format sent from hardware
+                chunk = chunk.replace(/ /g, '"')
+                chunk = chunk.replace(/:/g, '":')
+                chunk = chunk.replace('"}', '}')
+
+                console.log(chunk)
+
+                // Write to DB
+                const chunkData = JSON.parse(chunk)
+                const newData = {
+                    jumprun: {
+                        start: chunkData.start / 2048,
+                        end: chunkData.end / 2048,
+                        shift: chunkData.shift / 4096,
+                        angle: chunkData.angle,
+                    },
+                }
+
+                const data = storage.fetch()
+                storage.save({ ...data, ...newData })
+                sendEventsToAll({ ...data, ...newData })
+            })
+            serialPort.write('x')
         }
-    },
-)
-
-const parser = serialPort.pipe(new ReadlineParser({ delimiter: '\n' }))
-
-parser.on('data', chunk => {
-    // Silly bugfix for incorrect format sent from hardware
-    chunk = chunk.replace(/ /g, '"')
-    chunk = chunk.replace(/:/g, '":')
-    chunk = chunk.replace('"}', '}')
-
-    console.log(chunk)
-
-    // Write to DB
-    const chunkData = JSON.parse(chunk)
-    const newData = {
-        jumprun: {
-            start: chunkData.start / 2048,
-            end: chunkData.end / 2048,
-            shift: chunkData.shift / 4096,
-            angle: chunkData.angle,
-        },
-    }
-
-    const data = storage.fetch()
-    storage.save({ ...data, ...newData })
+    })
 })
-serialPort.write('x')
