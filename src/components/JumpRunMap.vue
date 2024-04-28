@@ -1,10 +1,8 @@
 <script setup>
-// Vue imports
 import { onMounted, onUnmounted, ref } from 'vue'
-// Mapbox imports
+import axios from 'axios'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
-// Application imports
 import {
     createCircleFeature,
     createJumprunFeature,
@@ -14,10 +12,10 @@ import {
 import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
-import axios from 'axios'
 
 // Is the server events connection open?
 const isConnected = ref(false)
+
 // Admin dialog element reference
 const adminDialog = ref(null)
 const isAdmin = import.meta.env.VITE_ADMIN === 'true'
@@ -56,7 +54,7 @@ function initMap() {
 
     return new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12?optimize=true',
         center: coordinates.mapCenter,
         zoom: 13.5,
     })
@@ -86,7 +84,7 @@ function initServerEvents(onUpdate) {
 
         const res = await axios.get('http://localhost:3008/api/storage')
         onUpdate(res.data)
-    }, 1000 * 5)
+    }, 1000)
 
     return evtSource
 }
@@ -153,7 +151,7 @@ onMounted(() => {
 
         <JumpRunInfoBox :staff="data.staff" :jumprun="data.jumprun">
             <button
-                v-if="isAdmin"
+                v-if="false && isAdmin"
                 :class="$style.openAdminDialog"
                 @click="toggleAdminDialog"
             >
@@ -161,10 +159,10 @@ onMounted(() => {
             </button>
         </JumpRunInfoBox>
 
-        <iframe
-            :class="$style.forecast"
-            src="https://www.yr.no/en/content/2-2710090/card.html"
-        ></iframe>
+        <!--        <iframe-->
+        <!--            :class="$style.forecast"-->
+        <!--            src="https://www.yr.no/en/content/2-2710090/card.html"-->
+        <!--        ></iframe>-->
 
         <div v-if="isConnected" :class="$style.connectionMessage">
             <div :class="[$style.connectionDot, $style.active]"></div>
@@ -228,11 +226,13 @@ onMounted(() => {
 .connectionMessage {
     position: fixed;
     z-index: 1000;
-    bottom: 30px;
-    right: 10px;
+    top: 10px;
+    left: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
+    color: #fff;
+    opacity: 0.8;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
 }
 

@@ -2,7 +2,7 @@ import express from 'express'
 import storage from './utils/storage.js'
 import serialport from 'serialport'
 import { ReadlineParser } from '@serialport/parser-readline'
-import { WeatherService } from './utils/scraper.js'
+import * as fs from 'node:fs'
 
 const app = express()
 const port = 3008
@@ -35,12 +35,6 @@ app.post('/api/storage', (req, res) => {
 })
 
 let clients = []
-
-app.get('/api/scraper', (req, res) => {
-    new WeatherService().getLhp().then(data => {
-        res.send(data)
-    })
-})
 
 app.get('/subscribe', (req, res) => {
     const headers = {
@@ -127,9 +121,41 @@ serialport.SerialPort.list().then(res => {
 
                 const data = storage.fetch()
                 storage.save({ ...data, ...newData })
-                sendEventsToAll({ ...data, ...newData })
             })
+
             serialPort.write('x')
         }
     })
+})
+
+// Listen for changes in data.json
+const filePath = './backend/data.json'
+
+fs.watch(filePath, (eventType, filename) => {
+    if (filename) {
+        console.log(`File ${filename} has been modified!`)
+
+        // Read the updated file contents
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('Error reading file:', err)
+                return
+            }
+
+            try {
+                // Parse the JSON data
+                const jsonData = JSON.parse(data)
+
+                // Output the parsed JSON data
+                console.log('Updated JSON data:', jsonData)
+
+                sendEventsToAll(jsonData)
+
+                // Perform any desired actions with the parsed JSON data
+                // ...
+            } catch (error) {
+                console.error('Error parsing JSON:', error)
+            }
+        })
+    }
 })

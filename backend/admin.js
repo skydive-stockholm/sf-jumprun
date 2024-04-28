@@ -1,5 +1,5 @@
-const express = require('express')
-const { storage } = require('./utils/storage')
+import express from 'express'
+import storage from './utils/storage.js'
 const app = express()
 const port = 3008
 
