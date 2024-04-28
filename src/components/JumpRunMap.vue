@@ -82,7 +82,9 @@ function initServerEvents(onUpdate) {
             return
         }
 
-        const res = await axios.get('http://localhost:3008/api/storage')
+        const res = await axios.get(
+            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
+        )
         onUpdate(res.data)
     }, 1000)
 
