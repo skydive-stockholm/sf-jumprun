@@ -8,7 +8,7 @@ const app = express()
 const port = 3008
 
 app.use(express.json())
-app.use(express.static('../dist'))
+app.use(express.static('dist'))
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
