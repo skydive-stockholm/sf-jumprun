@@ -38,7 +38,7 @@ defineProps({
         </div>
 
         <div>
-            <strong>Jum run heading:</strong>
+            <strong>Jump run heading:</strong>
             <span>&nbsp;</span>
             <span>{{ jumprun.angle }}°</span>
         </div>
