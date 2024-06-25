@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { reactive } from 'vue'
 
-defineEmits(['cancel'])
+const emit = defineEmits(['cancel'])
 
 const data = reactive({
     staff: {
@@ -24,6 +24,7 @@ axios.get(`http://${import.meta.env.VITE_HOST}:3008/api/storage`).then(res => {
 
 const save = () => {
     axios.post(`http://${import.meta.env.VITE_HOST}:3008/api/storage`, data)
+    emit('cancel')
 }
 </script>
 
@@ -32,17 +33,29 @@ const save = () => {
         <form :class="$style.form" @submit.prevent="save">
             <label :class="$style.inputWrapper">
                 Manifestor
-                <input v-model="data.staff.manifestor" type="text" />
+                <input
+                    v-model="data.staff.manifestor"
+                    type="text"
+                    :autofocus="false"
+                />
             </label>
 
             <label :class="$style.inputWrapper">
                 Jump leader
-                <input v-model="data.staff.jumpLeader" type="text" />
+                <input
+                    v-model="data.staff.jumpLeader"
+                    type="text"
+                    :autofocus="false"
+                />
             </label>
 
             <label :class="$style.inputWrapper">
                 Pilot
-                <input v-model="data.staff.pilot" type="text" />
+                <input
+                    v-model="data.staff.pilot"
+                    type="text"
+                    :autofocus="false"
+                />
             </label>
 
             <!--            <div :class="$style.jumprunSliders">-->

@@ -18,9 +18,9 @@ const isConnected = ref(false)
 
 // Admin dialog element reference
 const adminDialog = ref(null)
-const isAdmin = import.meta.env.VITE_ADMIN === 'true'
 const map = ref(null)
 const data = ref(null)
+
 const toggleAdminDialog = () => {
     if (adminDialog.value.open) {
         adminDialog.value.close()
@@ -129,6 +129,17 @@ onMounted(() => {
         })
     })
 
+    window.addEventListener('keydown', e => {
+        if (
+            e.key === 'a' &&
+            e.metaKey === true &&
+            adminDialog.value.open === false
+        ) {
+            e.preventDefault()
+            toggleAdminDialog()
+        }
+    })
+
     onUnmounted(() => {
         eventSource.value.close()
         map.value.remove()
@@ -146,20 +157,10 @@ onMounted(() => {
 
         <!-- A modal dialog containing a form -->
         <dialog ref="adminDialog" :class="$style.adminDialog">
-            <form>
-                <AdminPanel @cancel="toggleAdminDialog" />
-            </form>
+            <AdminPanel @cancel="toggleAdminDialog" />
         </dialog>
 
-        <JumpRunInfoBox :staff="data.staff" :jumprun="data.jumprun">
-            <button
-                v-if="false && isAdmin"
-                :class="$style.openAdminDialog"
-                @click="toggleAdminDialog"
-            >
-                Change staff
-            </button>
-        </JumpRunInfoBox>
+        <JumpRunInfoBox :staff="data.staff" :jumprun="data.jumprun" />
 
         <!--        <iframe-->
         <!--            :class="$style.forecast"-->
