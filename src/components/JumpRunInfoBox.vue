@@ -21,7 +21,7 @@ defineProps({
         <JumpRunWeather />
 
         <!-- Jump run data -->
-        <div v-if="jumprun?.start" :class="$style.jumpRunData">
+        <div v-if="jumprun?.start || jumprun?.end" :class="$style.jumpRunData">
             <div>
                 <span :class="[$style.indicator, $style.indicatorGreen]"></span>
                 <span>&nbsp;</span>
@@ -37,7 +37,7 @@ defineProps({
             </div>
         </div>
 
-        <div v-if="jumprun?.angle">
+        <div v-if="typeof jumprun?.angle !== 'undefined'">
             <strong>Jump run heading:</strong>
             <span>&nbsp;</span>
             <span>{{ jumprun.angle }}°</span>
