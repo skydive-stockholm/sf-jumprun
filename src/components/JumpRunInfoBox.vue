@@ -21,7 +21,7 @@ defineProps({
         <JumpRunWeather />
 
         <!-- Jump run data -->
-        <div :class="$style.jumpRunData">
+        <div v-if="jumprun?.start" :class="$style.jumpRunData">
             <div>
                 <span :class="[$style.indicator, $style.indicatorGreen]"></span>
                 <span>&nbsp;</span>
@@ -37,7 +37,7 @@ defineProps({
             </div>
         </div>
 
-        <div>
+        <div v-if="jumprun?.angle">
             <strong>Jump run heading:</strong>
             <span>&nbsp;</span>
             <span>{{ jumprun.angle }}°</span>
@@ -48,19 +48,19 @@ defineProps({
             <div>
                 <strong>Jump leader:</strong>
                 <span>&nbsp;</span>
-                <span>{{ staff.jumpLeader }}</span>
+                <span v-if="staff?.jumpLeader">{{ staff.jumpLeader }}</span>
             </div>
 
             <div>
                 <strong>Manifestor:</strong>
                 <span>&nbsp;</span>
-                <span>{{ staff.manifestor }}</span>
+                <span v-if="staff?.manifestor">{{ staff.manifestor }}</span>
             </div>
 
             <div>
                 <strong>Pilot:</strong>
                 <span>&nbsp;</span>
-                <span>{{ staff.pilot }}</span>
+                <span v-if="staff.pilot">{{ staff.pilot }}</span>
             </div>
 
             <div>

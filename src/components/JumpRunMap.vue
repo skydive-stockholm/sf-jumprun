@@ -129,17 +129,6 @@ onMounted(() => {
         })
     })
 
-    window.addEventListener('keydown', e => {
-        if (
-            e.key === 'a' &&
-            e.metaKey === true &&
-            adminDialog.value.open === false
-        ) {
-            e.preventDefault()
-            toggleAdminDialog()
-        }
-    })
-
     onUnmounted(() => {
         eventSource.value.close()
         map.value.remove()
@@ -157,10 +146,14 @@ onMounted(() => {
 
         <!-- A modal dialog containing a form -->
         <dialog ref="adminDialog" :class="$style.adminDialog">
-            <AdminPanel @cancel="toggleAdminDialog" />
+            <AdminPanel @close="toggleAdminDialog" />
         </dialog>
 
-        <JumpRunInfoBox :staff="data.staff" :jumprun="data.jumprun" />
+        <JumpRunInfoBox
+            :staff="data.staff"
+            :jumprun="data.jumprun"
+            @click="toggleAdminDialog"
+        />
 
         <!--        <iframe-->
         <!--            :class="$style.forecast"-->

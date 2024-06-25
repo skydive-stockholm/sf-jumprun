@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { reactive } from 'vue'
 
-const emit = defineEmits(['cancel'])
+const emit = defineEmits(['close'])
 
 const data = reactive({
     staff: {
@@ -24,7 +24,7 @@ axios.get(`http://${import.meta.env.VITE_HOST}:3008/api/storage`).then(res => {
 
 const save = () => {
     axios.post(`http://${import.meta.env.VITE_HOST}:3008/api/storage`, data)
-    emit('cancel')
+    emit('close')
 }
 </script>
 
@@ -108,12 +108,6 @@ const save = () => {
             <!--            </div>-->
 
             <button :class="$style.button" type="submit">Save</button>
-            <button
-                :class="[$style.button, $style.cancelButton]"
-                @click="$emit('cancel')"
-            >
-                Cancel
-            </button>
         </form>
     </div>
 </template>
@@ -145,12 +139,6 @@ const save = () => {
     color: #fff;
     cursor: pointer;
     margin-top: 10px;
-}
-
-.cancelButton {
-    background: #383838;
-    color: #fff;
-    border: 1px solid #383838;
 }
 
 .header {
