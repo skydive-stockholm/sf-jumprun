@@ -7,8 +7,17 @@ const filePath = path.join(__dirname + '/..', 'data.json')
 
 export default {
     fetch: () => {
-        const json = fs.readFileSync(filePath).toString()
-        return JSON.parse(json)
+        try {
+            const json = fs.readFileSync(filePath).toString()
+            return JSON.parse(json)
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                // File doesn't exist, create an empty one
+                fs.writeFileSync(filePath, JSON.stringify({}))
+                return {}
+            }
+            throw error // Re-throw if it's a different error
+        }
     },
     save: data => {
         fs.writeFileSync(filePath, JSON.stringify(data))
