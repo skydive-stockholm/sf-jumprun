@@ -150,8 +150,8 @@ onMounted(() => {
         </dialog>
 
         <JumpRunInfoBox
-            :staff="data.staff"
-            :jumprun="data.jumprun"
+            :staff="data.staff || null"
+            :jumprun="data.jumprun || null"
             @click="toggleAdminDialog"
         />
 
