@@ -86,7 +86,7 @@ defineProps({
     display: flex;
     gap: 20px;
     flex-direction: column;
-    width: 420px;
+    width: 442px;
     font-size: 19px;
 }
 
