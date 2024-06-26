@@ -113,11 +113,15 @@ onMounted(() => {
     map.value.on('load', () => {
         initMapFeatures(map.value)
         eventSource.value = initServerEvents(res => {
-            data.value = res
-
-            if (!data.value.jumprun) {
+            if (JSON.stringify(data.value) === JSON.stringify(res)) {
                 return
             }
+
+            if (!res.jumprun) {
+                return
+            }
+
+            data.value = res
 
             updateJumpRun(
                 map.value,
