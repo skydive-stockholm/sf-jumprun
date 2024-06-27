@@ -1,9 +1,31 @@
 <script setup>
 import { useWeatherAloft } from '../composables/useWeatherAloft.js'
 import { useWeather } from '../composables/useWeather.js'
+import { onUnmounted } from 'vue'
 
 const weatherAloft = useWeatherAloft()
 const groundWeather = useWeather()
+
+// Update weather aloft every 15 minutes
+const intervalAloft = setInterval(
+    () => {
+        weatherAloft.update()
+    },
+    15 * 60 * 1000,
+)
+
+onUnmounted(() => {
+    clearInterval(intervalAloft)
+})
+
+// Update ground weather every minute
+const intervalGround = setInterval(() => {
+    groundWeather.update()
+}, 60 * 1000)
+
+onUnmounted(() => {
+    clearInterval(intervalGround)
+})
 </script>
 
 <template>

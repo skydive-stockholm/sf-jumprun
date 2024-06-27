@@ -1,6 +1,5 @@
-import { onUnmounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import axios from 'axios'
-import weatherData from '../data/weatherData.json'
 
 export const useWeather = () => {
     const weatherApiUrl = `https://insidan.skydive.se/api/weather`
@@ -26,11 +25,11 @@ export const useWeather = () => {
 
         data.value = val
 
-        const item = val[val.length - 1]
+        const item = val[0]
 
         result.windDirection = windDirection(item.windDegrees).name
         result.windDegrees = item.windDegrees
-        result.wind = roundNumber(item.wind)
+        result.wind = roundNumber(item.windAverage)
         result.windGust = roundNumber(item.windGust)
         result.temperature = roundNumber(item.temperature)
 
@@ -38,10 +37,6 @@ export const useWeather = () => {
     }
 
     function fetchWeather() {
-        if (import.meta.env.DEV) {
-            return setData(weatherData)
-        }
-
         axios.get(weatherApiUrl).then(({ data }) => {
             setData(data)
         })
@@ -85,10 +80,6 @@ export const useWeather = () => {
 
     // Fetch the weather on created
     fetchWeather()
-
-    // Set timeout to fetch weather 2 minutes
-    const interval = setInterval(fetchWeather, 2 * 60 * 1000)
-    onUnmounted(() => clearInterval(interval))
 
     return {
         current: result,
