@@ -32,7 +32,7 @@ const save = () => {
     <div :class="$style.container">
         <form :class="$style.form" @submit.prevent="save">
             <label :class="$style.inputWrapper">
-                Manifestor
+                Manifest
                 <input
                     v-model="data.staff.manifestor"
                     type="text"

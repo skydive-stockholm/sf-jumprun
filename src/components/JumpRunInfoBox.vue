@@ -53,7 +53,7 @@ defineProps({
             </div>
 
             <div>
-                <strong>Manifestor:</strong>
+                <strong>Manifest:</strong>
                 <span>&nbsp;</span>
                 <span v-if="staff?.manifestor">{{ staff.manifestor }}</span>
             </div>
