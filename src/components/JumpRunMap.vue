@@ -4,6 +4,7 @@ import axios from 'axios'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
+    addTextToMap,
     createCircleFeature,
     createJumprunFeature,
     createLineFeature,
@@ -106,6 +107,18 @@ function initMapFeatures(map) {
 
     // Create jumprun arrow
     createJumprunFeature(map, 0, 0, 0, 30)
+
+    // Add text 1 nautical mile north of the map center
+    addTextToMap(map, '360°', 0)
+
+    // Add text 1 nautical mile east of the map center
+    addTextToMap(map, '90°', 90)
+
+    // Add text 1 nautical mile south of the map center
+    addTextToMap(map, '180°', 180)
+
+    // Add text 1 nautical mile west of the map center
+    addTextToMap(map, '270°', 270)
 }
 const eventSource = ref(null)
 onMounted(() => {

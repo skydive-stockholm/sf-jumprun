@@ -2,6 +2,65 @@ import turfCircle from '@turf/circle'
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
 
+export function addTextToMap(
+    map,
+    text,
+    angle = 0,
+    distance = 0.5,
+    options = {},
+) {
+    const id = `text-${Math.random().toString(36).substr(2, 9)}` // Generate a unique ID
+
+    // Calculate the position 1 nautical mile from the map center
+    const point = turf.point(coordinates.mapCenter)
+    const destination = turf.destination(point, distance, angle, {
+        units: 'nauticalmiles',
+    })
+    const textCoordinates = destination.geometry.coordinates
+
+    // Add a GeoJSON source with a single point feature
+    map.addSource(id, {
+        type: 'geojson',
+        data: {
+            type: 'FeatureCollection',
+            features: [
+                {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: textCoordinates,
+                    },
+                    properties: {
+                        text: text,
+                    },
+                },
+            ],
+        },
+    })
+
+    // Add a symbol layer to render the text
+    map.addLayer({
+        id: id,
+        type: 'symbol',
+        source: id,
+        layout: {
+            'text-field': ['get', 'text'],
+            'text-size': options.size || 20,
+            'text-anchor': options.anchor || 'center',
+            'text-offset': options.offset || [0, 0],
+            'text-rotate': options.rotate || 0,
+        },
+        paint: {
+            'text-color': options.color || '#000000',
+            'text-halo-color': options.haloColor || '#ffffff',
+            'text-halo-width': options.haloWidth || 1.5,
+        },
+    })
+
+    // Return the layer ID in case you need to modify or remove it later
+    return id
+}
+
 export const createLineFeature = (map, direction) => {
     const id = 'line-' + direction
 
@@ -142,6 +201,8 @@ export const createJumprunFeature = (map, start, end, shift, angle) => {
             'line-opacity': 1,
         },
     })
+
+    return jr
 }
 
 export const updateJumpRun = (map, start, end, shift, angle) => {
