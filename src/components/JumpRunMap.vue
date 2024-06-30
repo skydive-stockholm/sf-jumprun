@@ -23,6 +23,7 @@ const map = ref(null)
 const data = ref(null)
 
 const toggleAdminDialog = () => {
+    console.log('foo')
     if (adminDialog.value.open) {
         adminDialog.value.close()
     } else {

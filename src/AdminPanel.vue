@@ -23,7 +23,7 @@ axios.get(`http://${import.meta.env.VITE_HOST}:3008/api/storage`).then(res => {
 })
 
 const save = () => {
-    axios.post(`http://${import.meta.env.VITE_HOST}:3008/api/storage`, data)
+    axios.post(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, data)
     emit('close')
 }
 </script>

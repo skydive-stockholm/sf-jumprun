@@ -20,7 +20,8 @@ export default {
         }
     },
     save: data => {
-        fs.writeFileSync(filePath, JSON.stringify(data))
+        const jsonData = JSON.stringify(data)
+        fs.writeFileSync(filePath, jsonData)
     },
     onSave: callback => {
         fs.watchFile(filePath, callback)
