@@ -70,7 +70,9 @@ function initMap() {
 }
 
 function initServerEvents(onUpdate) {
-    const evtSource = new EventSource('http://localhost:3008/subscribe')
+    const evtSource = new EventSource(
+        `http://${import.meta.env.VITE_HOST}:3008/subscribe`,
+    )
 
     evtSource.onopen = () => {
         isConnected.value = true
