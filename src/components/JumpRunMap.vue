@@ -54,11 +54,18 @@ function initMap() {
 
     mapboxgl.accessToken = viteMapboxApiKey
 
+    let zoom = 13.5
+
+    // If on mobile, set zoom to 12
+    if (window.innerWidth < 768) {
+        zoom = 12.5
+    }
+
     return new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12?optimize=true',
         center: coordinates.mapCenter,
-        zoom: 13.5,
+        zoom: zoom,
     })
 }
 
@@ -167,16 +174,16 @@ onMounted(() => {
             <AdminPanel @close="toggleAdminDialog" />
         </dialog>
 
-        <JumpRunInfoBox
-            :staff="data.staff || null"
-            :jumprun="data.jumprun || null"
-            @click="toggleAdminDialog"
-        />
+        <div :class="$style.mapContainer">
+            <!-- Mapbox map -->
+            <div id="map" :class="$style.mapBox"></div>
 
-        <!--        <iframe-->
-        <!--            :class="$style.forecast"-->
-        <!--            src="https://www.yr.no/en/content/2-2710090/card.html"-->
-        <!--        ></iframe>-->
+            <JumpRunInfoBox
+                :staff="data.staff || null"
+                :jumprun="data.jumprun || null"
+                @click="toggleAdminDialog"
+            />
+        </div>
 
         <div v-if="isConnected" :class="$style.connectionMessage">
             <div :class="[$style.connectionDot, $style.active]"></div>
@@ -188,8 +195,6 @@ onMounted(() => {
 
             Not connected
         </div>
-
-        <div id="map" :class="$style.mapBox"></div>
     </div>
 </template>
 
@@ -211,6 +216,20 @@ onMounted(() => {
     margin: 30px;
     z-index: 100;
     width: 120px;
+}
+
+@media (max-width: 768px) {
+    .compass {
+        display: none;
+    }
+
+    .mapContainer {
+        display: grid;
+        /** Two column grid divided equally 50% vertically */
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        height: 100%;
+    }
 }
 
 .adminDialog {

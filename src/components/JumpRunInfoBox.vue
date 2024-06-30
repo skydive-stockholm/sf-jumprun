@@ -75,7 +75,6 @@ defineProps({
 
 <style module>
 .infoBox {
-    position: fixed;
     z-index: 10;
     color: #ececec;
     background: #1b1b1b;
@@ -84,10 +83,24 @@ defineProps({
     border-top-right-radius: 6px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     display: flex;
-    gap: 20px;
     flex-direction: column;
-    width: 442px;
     font-size: 19px;
+}
+
+@media (min-width: 768px) {
+    .infoBox {
+        position: fixed;
+        width: 442px;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 767px) {
+    .infoBox {
+        font-size: 14px;
+        width: 100%;
+        gap: 12px;
+    }
 }
 
 .indicator {
