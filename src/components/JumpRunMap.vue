@@ -218,6 +218,11 @@ onMounted(() => {
     width: 120px;
 }
 
+.mapContainer {
+    height: 100%;
+    width: 100%;
+}
+
 @media (max-width: 768px) {
     .compass {
         display: none;
