@@ -1,5 +1,9 @@
 #!/bin/bash
 
 git pull
+npm install
 npm run build
-node backend/backend.js
+
+cd backend
+npm install
+node backend.js
