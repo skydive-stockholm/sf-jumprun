@@ -61,7 +61,7 @@ defineProps({
             <div>
                 <strong>Pilot:</strong>
                 <span>&nbsp;</span>
-                <span v-if="staff.pilot">{{ staff.pilot }}</span>
+                <span v-if="staff?.pilot">{{ staff.pilot }}</span>
             </div>
 
             <div>
