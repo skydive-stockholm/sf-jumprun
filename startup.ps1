@@ -6,4 +6,6 @@ npm run build
 
 cd backend
 npm install
+
+cd ..
 node backend.js
