@@ -8,4 +8,4 @@ cd backend
 npm install
 
 cd ..
-node backend.js
+node backend/backend.js
