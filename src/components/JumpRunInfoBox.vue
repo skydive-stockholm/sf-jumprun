@@ -44,6 +44,16 @@ defineProps({
             <span>{{ jumprun.angle }}°</span>
         </div>
 
+        <div>
+            <strong>Separation</strong>
+
+            <div :class="$style.separation">
+                <div>Small groups: 8s</div>
+
+                <div>Large groups: 12s</div>
+            </div>
+        </div>
+
         <!-- Staff -->
         <div :class="$style.staffContainer">
             <div>
@@ -127,5 +137,16 @@ defineProps({
     display: flex;
     flex-direction: column;
     gap: 4px;
+}
+
+@media (max-width: 767px) {
+    .staffContainer {
+        display: none;
+    }
+}
+
+.separation {
+    display: flex;
+    justify-content: space-between;
 }
 </style>

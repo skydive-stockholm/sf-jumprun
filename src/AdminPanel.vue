@@ -1,30 +1,30 @@
 <script setup>
-import axios from 'axios'
-import { reactive } from 'vue'
+const emit = defineEmits([
+    'close',
+    'save',
+    'update:manifestor',
+    'update:jumpLeader',
+    'update:pilot',
+])
 
-const emit = defineEmits(['close'])
-
-const data = reactive({
-    staff: {
-        manifestor: '',
-        jumpLeader: '',
-        pilot: '',
+const props = defineProps({
+    manifestor: {
+        type: String,
+        required: true,
+    },
+    jumpLeader: {
+        type: String,
+        required: true,
+    },
+    pilot: {
+        type: String,
+        required: true,
     },
 })
 
-axios.get(`http://${import.meta.env.VITE_HOST}:3008/api/storage`).then(res => {
-    if (res.data.staff) {
-        data.staff = res.data.staff
-    }
-
-    if (res.data.jumprun) {
-        data.jumprun = res.data.jumprun
-    }
-})
-
 const save = () => {
-    axios.post(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, data)
     emit('close')
+    emit('save')
 }
 </script>
 
@@ -34,27 +34,30 @@ const save = () => {
             <label :class="$style.inputWrapper">
                 Manifest
                 <input
-                    v-model="data.staff.manifestor"
                     type="text"
                     :autofocus="false"
+                    :value="props.manifestor"
+                    @input="$emit('update:manifestor', $event.target.value)"
                 />
             </label>
 
             <label :class="$style.inputWrapper">
                 Jump leader
                 <input
-                    v-model="data.staff.jumpLeader"
                     type="text"
                     :autofocus="false"
+                    :value="props.jumpLeader"
+                    @input="$emit('update:jumpLeader', $event.target.value)"
                 />
             </label>
 
             <label :class="$style.inputWrapper">
                 Pilot
                 <input
-                    v-model="data.staff.pilot"
                     type="text"
                     :autofocus="false"
+                    :value="props.pilot"
+                    @input="$emit('update:pilot', $event.target.value)"
                 />
             </label>
 

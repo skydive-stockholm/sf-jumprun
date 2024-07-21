@@ -4,7 +4,26 @@ import { reactive, ref } from 'vue'
 
 export const useWeatherAloft = () => {
     const data = ref([])
-    const current = ref(null)
+    const current = ref({
+        600: {
+            altitude: 600,
+            temperature: 0,
+            wind: 0,
+            windDegrees: 0,
+        },
+        1500: {
+            altitude: 1500,
+            temperature: 0,
+            wind: 0,
+            windDegrees: 0,
+        },
+        3000: {
+            altitude: 3000,
+            temperature: 0,
+            wind: 0,
+            windDegrees: 0,
+        },
+    })
 
     const update = async () => {
         const endpoint = `https://insidan.skydive.se/api/weatheraloft`
@@ -19,11 +38,8 @@ export const useWeatherAloft = () => {
             return date.getTime() <= now.getTime()
         })
 
-        console.log(data.value[key])
-
         if (data.value[key]) {
             current.value = mapKeys(data.value[key], 'altitude')
-            console.log(current.value)
         }
     }
 

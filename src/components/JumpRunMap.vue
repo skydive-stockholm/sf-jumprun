@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import axios from 'axios'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
@@ -20,18 +20,7 @@ const isConnected = ref(false)
 // Admin dialog element reference
 const adminDialog = ref(null)
 const map = ref(null)
-const data = ref(null)
-
-const toggleAdminDialog = () => {
-    console.log('foo')
-    if (adminDialog.value.open) {
-        adminDialog.value.close()
-    } else {
-        adminDialog.value.showModal()
-    }
-}
-
-data.value = {
+const data = reactive({
     staff: {
         manifestor: '',
         jumpLeader: '',
@@ -43,6 +32,19 @@ data.value = {
         shift: 0,
         angle: 0,
     },
+})
+
+const toggleAdminDialog = () => {
+    // Only show admin dialog on localhost
+    if (window.location.hostname !== 'localhost') {
+        return
+    }
+
+    if (adminDialog.value.open) {
+        adminDialog.value.close()
+    } else {
+        adminDialog.value.showModal()
+    }
 }
 
 function initMap() {
@@ -136,7 +138,7 @@ onMounted(() => {
     map.value.on('load', () => {
         initMapFeatures(map.value)
         eventSource.value = initServerEvents(res => {
-            if (JSON.stringify(data.value) === JSON.stringify(res)) {
+            if (JSON.stringify(data) === JSON.stringify(res)) {
                 return
             }
 
@@ -144,14 +146,15 @@ onMounted(() => {
                 return
             }
 
-            data.value = res
+            data.staff = res.staff
+            data.jumprun = res.jumprun
 
             updateJumpRun(
                 map.value,
-                data.value.jumprun.start,
-                data.value.jumprun.end,
-                data.value.jumprun.shift,
-                data.value.jumprun.angle,
+                data.jumprun.start,
+                data.jumprun.end,
+                data.jumprun.shift,
+                data.jumprun.angle,
             )
         })
     })
@@ -161,6 +164,10 @@ onMounted(() => {
         map.value.remove()
     })
 })
+
+const save = () => {
+    axios.post(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, data)
+}
 </script>
 
 <template>
@@ -173,7 +180,13 @@ onMounted(() => {
 
         <!-- A modal dialog containing a form -->
         <dialog ref="adminDialog" :class="$style.adminDialog">
-            <AdminPanel @close="toggleAdminDialog" />
+            <AdminPanel
+                v-model:manifestor="data.staff.manifestor"
+                v-model:jump-leader="data.staff.jumpLeader"
+                v-model:pilot="data.staff.pilot"
+                @close="toggleAdminDialog"
+                @save="save"
+            />
         </dialog>
 
         <div :class="$style.mapContainer">
@@ -234,7 +247,7 @@ onMounted(() => {
         display: grid;
         /** Two column grid divided equally 50% vertically */
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr 1fr;
+        grid-template-rows: 1fr auto;
         height: 100%;
     }
 }

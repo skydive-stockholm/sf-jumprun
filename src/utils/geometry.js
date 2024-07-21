@@ -45,7 +45,7 @@ export function addTextToMap(
         source: id,
         layout: {
             'text-field': ['get', 'text'],
-            'text-size': options.size || 20,
+            'text-size': options.size || 25,
             'text-anchor': options.anchor || 'center',
             'text-offset': options.offset || [0, 0],
             'text-rotate': options.rotate || 0,
@@ -53,7 +53,7 @@ export function addTextToMap(
         paint: {
             'text-color': options.color || '#000000',
             'text-halo-color': options.haloColor || '#ffffff',
-            'text-halo-width': options.haloWidth || 1.5,
+            'text-halo-width': options.haloWidth || 1.8,
         },
     })
 
