@@ -139,6 +139,11 @@ serialport.SerialPort.list().then(res => {
 // Listen for changes in data.json
 const filePath = './backend/data.json'
 
+// Ensure data.json exists
+if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '{}', 'utf8') // start with empty JSON object
+}
+
 fs.watch(filePath, (eventType, filename) => {
     if (filename) {
         console.log(`File ${filename} has been modified!`)
