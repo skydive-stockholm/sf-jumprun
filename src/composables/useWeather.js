@@ -2,7 +2,7 @@ import { reactive, ref } from 'vue'
 import axios from 'axios'
 
 export const useWeather = () => {
-    const weatherApiUrl = `https://insidan.skydive.se/api/weather`
+    const weatherApiUrl = `https://insidan.skydive.se/api/lastweather`
 
     const result = reactive({
         windDirection: '',
@@ -19,19 +19,17 @@ export const useWeather = () => {
     }
 
     function setData(val) {
-        if (!val || !val?.length) {
+        if (!val) {
             return
         }
 
         data.value = val
 
-        const item = val[0]
-
-        result.windDirection = windDirection(item.windDegrees).name
-        result.windDegrees = item.windDegrees
-        result.wind = roundNumber(item.windAverage)
-        result.windGust = roundNumber(item.windGust)
-        result.temperature = roundNumber(item.temperature)
+        result.windDirection = windDirection(val.windDegrees).name
+        result.windDegrees = val.windDegrees
+        result.wind = roundNumber(val.windAverage)
+        result.windGust = roundNumber(val.windGust)
+        result.temperature = roundNumber(val.temperature)
 
         return result
     }
@@ -83,7 +81,6 @@ export const useWeather = () => {
 
     return {
         current: result,
-        history: data,
         update: fetchWeather,
     }
 }
