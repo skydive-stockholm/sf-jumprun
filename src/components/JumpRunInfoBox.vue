@@ -79,6 +79,10 @@ defineProps({
                 <span>&nbsp;</span>
                 <span>+4676 135 43 85</span>
             </div>
+
+            <div>
+                <span>jumprun.skydive.se</span>
+            </div>
         </div>
     </section>
 </template>
