@@ -56,19 +56,19 @@ defineProps({
 
         <!-- Staff -->
         <div :class="$style.staffContainer">
-            <div>
+            <div :class="$style.staffRow">
                 <strong>Jump leader:</strong>
                 <span>&nbsp;</span>
                 <span v-if="staff?.jumpLeader">{{ staff.jumpLeader }}</span>
             </div>
 
-            <div>
+            <div :class="$style.staffRow">
                 <strong>Manifest:</strong>
                 <span>&nbsp;</span>
                 <span v-if="staff?.manifestor">{{ staff.manifestor }}</span>
             </div>
 
-            <div>
+            <div :class="$style.staffRow">
                 <strong>Pilot:</strong>
                 <span>&nbsp;</span>
                 <span v-if="staff?.pilot">{{ staff.pilot }}</span>
@@ -80,7 +80,7 @@ defineProps({
                 <span>+4676 135 43 85</span>
             </div>
 
-            <div>
+            <div :class="$style.staffRow">
                 <span>jumprun.skydive.se</span>
             </div>
         </div>
@@ -144,7 +144,7 @@ defineProps({
 }
 
 @media (max-width: 767px) {
-    .staffContainer {
+    .staffRow {
         display: none;
     }
 }
