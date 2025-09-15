@@ -141,7 +141,20 @@ const filePath = './backend/data.json'
 
 // Ensure data.json exists
 if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, '{}', 'utf8') // start with empty JSON object
+    const originalData = {
+        jumprun: {
+            start: 0,
+            end: 0,
+            angle: 0,
+            shift: 0
+        },
+        staff: {
+            manifestor: '',
+            jumpLeader: '',
+            pilot: ''
+        }
+    }
+    fs.writeFileSync(filePath, JSON.stringify(originalData), 'utf8') // start with empty JSON object
 }
 
 fs.watch(filePath, (eventType, filename) => {
