@@ -18,5 +18,12 @@ export function sanitizeStorage(body) {
         }
     }
 
+    if (body.settings) {
+        result.settings = {
+            mapboxApiKey: String(body.settings.mapboxApiKey || ''),
+            mapCenter: String(body.settings.mapCenter || ''),
+        }
+    }
+
     return result
 }

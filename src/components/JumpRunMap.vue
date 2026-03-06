@@ -9,7 +9,6 @@ import {
     createLineFeature,
     updateJumpRun,
 } from '../utils/geometry.js'
-import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
@@ -17,6 +16,7 @@ import { useDragHandles } from '../composables/useDragHandles.js'
 import { useViewMode } from '../composables/useViewMode.js'
 import ViewToggle from './ViewToggle.vue'
 import UpdateNotification from './UpdateNotification.vue'
+import SettingsPanel from './SettingsPanel.vue'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -58,18 +58,38 @@ const hasUnsavedChanges = ref(false)
 const isDragging = ref(false)
 let dragHandles = null
 
-function initMap() {
-    const viteMapboxApiKey = import.meta.env.VITE_MAPBOX_API_KEY
+const settings = reactive({ mapboxApiKey: '', mapCenter: '' })
 
-    if (!viteMapboxApiKey) {
-        throw new Error('Environment variable VITE_MAPBOX_API_KEY is not set')
+async function loadSettings() {
+    try {
+        const res = await fetch(
+            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
+        )
+        const stored = await res.json()
+        if (stored.settings) {
+            settings.mapboxApiKey = stored.settings.mapboxApiKey || ''
+            settings.mapCenter = stored.settings.mapCenter || ''
+        }
+    } catch {
+        // Use env var fallbacks
+    }
+}
+
+function getMapCenter() {
+    const raw = settings.mapCenter || import.meta.env.VITE_MAP_CENTER || '17.42929, 60.28519'
+    return raw.replace(/ /g, '').split(',').map(parseFloat)
+}
+
+function initMap() {
+    const apiKey = settings.mapboxApiKey || import.meta.env.VITE_MAPBOX_API_KEY
+
+    if (!apiKey) {
+        throw new Error('No Mapbox API key configured. Set it in Settings or VITE_MAPBOX_API_KEY.')
     }
 
-    mapboxgl.accessToken = viteMapboxApiKey
+    mapboxgl.accessToken = apiKey
 
     let zoom = 13.5
-
-    // If on mobile, set zoom to 12
     if (window.innerWidth < 768) {
         zoom = 12.5
     }
@@ -77,7 +97,7 @@ function initMap() {
     return new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12?optimize=true',
-        center: coordinates.mapCenter,
+        center: getMapCenter(),
         zoom: zoom,
     })
 }
@@ -112,7 +132,8 @@ function initMapFeatures(map) {
 }
 let serverEventsClose
 
-onMounted(() => {
+onMounted(async () => {
+    await loadSettings()
     map.value = initMap()
     map.value.on('load', () => {
         initMapFeatures(map.value)
@@ -210,6 +231,8 @@ const save = () => {
                 @close="toggleAdminDialog"
                 @save="save"
             />
+            <hr :class="$style.divider" />
+            <SettingsPanel />
         </dialog>
 
         <div :class="$style.mapContainer">
@@ -290,6 +313,12 @@ const save = () => {
     border: 0;
     border-bottom-right-radius: 8px;
     box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 12px 10px;
 }
 
 .adminDialog::backdrop {
