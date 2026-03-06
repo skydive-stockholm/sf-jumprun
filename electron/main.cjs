@@ -70,19 +70,21 @@ app.whenReady().then(async () => {
     createWindow()
     createTray()
 
-    autoUpdater.checkForUpdatesAndNotify()
+    if (!isDev) {
+        autoUpdater.checkForUpdatesAndNotify()
 
-    autoUpdater.on('update-available', () => {
-        mainWindow?.webContents.send('update-available')
-    })
+        autoUpdater.on('update-available', () => {
+            mainWindow?.webContents.send('update-available')
+        })
 
-    autoUpdater.on('update-downloaded', () => {
-        mainWindow?.webContents.send('update-downloaded')
-    })
+        autoUpdater.on('update-downloaded', () => {
+            mainWindow?.webContents.send('update-downloaded')
+        })
 
-    ipcMain.on('install-update', () => {
-        autoUpdater.quitAndInstall()
-    })
+        ipcMain.on('install-update', () => {
+            autoUpdater.quitAndInstall()
+        })
+    }
 
     ipcMain.handle('get-app-version', () => {
         return app.getVersion()

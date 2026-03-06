@@ -1,14 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const updateReady = ref(false)
+let removeListener = null
 
 onMounted(() => {
     if (!window.electronAPI) return
 
-    window.electronAPI.onUpdateDownloaded(() => {
+    removeListener = window.electronAPI.onUpdateDownloaded(() => {
         updateReady.value = true
     })
+})
+
+onUnmounted(() => {
+    removeListener?.()
 })
 
 function install() {

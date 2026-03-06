@@ -224,7 +224,7 @@ const save = () => {
         </div>
 
         <button
-            v-if="hasUnsavedChanges"
+            v-if="isAdmin && hasUnsavedChanges"
             :class="$style.saveButton"
             @click="save"
         >

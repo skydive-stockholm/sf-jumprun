@@ -64,11 +64,6 @@ export function startBackend(options = {}) {
         res.sendFile(path.join(path.resolve(distPath), 'index.html'))
     })
 
-    initSerial((jumprun) => {
-        const data = storage.fetch()
-        storage.save({ ...data, jumprun: { ...jumprun } })
-    })
-
     if (!fs.existsSync(dataPath)) {
         const originalData = {
             jumprun: { start: -0.2, end: 0.2, angle: 30, shift: 0 },
@@ -76,6 +71,11 @@ export function startBackend(options = {}) {
         }
         fs.writeFileSync(dataPath, JSON.stringify(originalData), 'utf8')
     }
+
+    initSerial((jumprun) => {
+        const data = storage.fetch()
+        storage.save({ ...data, jumprun: { ...jumprun } })
+    })
 
     let debounceTimer = null
     fs.watch(dataPath, (eventType, filename) => {
@@ -102,9 +102,19 @@ export function startBackend(options = {}) {
     const publicServer = publicApp.listen(publicPort, () => {
         console.log(`Jump run public app listening on port ${publicPort}`)
     })
+    publicServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE')
+            console.error(`Port ${publicPort} already in use`)
+        else throw err
+    })
 
     const privateServer = privateApp.listen(privatePort, () => {
         console.log(`Jump run private app listening on port ${privatePort}`)
+    })
+    privateServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE')
+            console.error(`Port ${privatePort} already in use`)
+        else throw err
     })
 
     return { publicServer, privateServer }

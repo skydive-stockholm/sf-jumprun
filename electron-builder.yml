@@ -15,11 +15,9 @@ extraMetadata:
 
 win:
   target: nsis
-  icon: electron/icon.png
 
 mac:
   target: dmg
-  icon: electron/icon.png
   category: public.app-category.utilities
 
 nsis:
@@ -30,5 +28,6 @@ publish:
   provider: github
 
 asarUnpack:
+  - "dist/**/*"
   - "node_modules/serialport/**"
   - "node_modules/@serialport/**"
