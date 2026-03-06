@@ -11,7 +11,7 @@
         "preview": "vite preview",
         "format": "prettier .  --write",
         "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
-        "backend": "nodemon backend/backend.js --ignore 'data.json'",
+        "backend": "nodemon backend/standalone.js --ignore 'data.json'",
         "test": "vitest run",
         "test:watch": "vitest",
         "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
