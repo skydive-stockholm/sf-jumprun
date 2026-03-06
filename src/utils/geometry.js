@@ -156,19 +156,6 @@ const jrHelper = (start, end, shift, angle) => {
     })
 }
 
-// function createTextFeature(map, text, coordinates) {
-//     const el = document.createElement('div')
-//     el.innerHTML = text
-//     el.className = 'marker'
-//     el.style.color = 'white'
-//     el.style.margin = '20px'
-//     el.style.fontSize = '20px'
-//     el.style.textShadow = '2px 2px 4px #000000'
-//
-//     // make a marker for each feature and add it to the map
-//     return new mapboxgl.Marker(el).setLngLat(coordinates).addTo(map)
-// }
-
 /**
  *
  * @param map

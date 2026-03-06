@@ -61,55 +61,6 @@ const save = () => {
                 />
             </label>
 
-            <!--            <div :class="$style.jumprunSliders">-->
-            <!--                <label>-->
-            <!--                    Start-->
-            <!--                    <input-->
-            <!--                        v-model.number="data.jumprun.start"-->
-            <!--                        min="-4"-->
-            <!--                        max="4"-->
-            <!--                        step="0.1"-->
-            <!--                        type="range"-->
-            <!--                    />-->
-            <!--                    {{ data.jumprun.start }}nm-->
-            <!--                </label>-->
-
-            <!--                <label>-->
-            <!--                    End-->
-            <!--                    <input-->
-            <!--                        v-model.number="data.jumprun.end"-->
-            <!--                        min="-4"-->
-            <!--                        max="4"-->
-            <!--                        step="0.1"-->
-            <!--                        type="range"-->
-            <!--                    />-->
-            <!--                    {{ data.jumprun.end }}nm-->
-            <!--                </label>-->
-
-            <!--                <label>-->
-            <!--                    Shift-->
-            <!--                    <input-->
-            <!--                        v-model.number="data.jumprun.shift"-->
-            <!--                        min="-0.5"-->
-            <!--                        max="0.5"-->
-            <!--                        step="0.01"-->
-            <!--                        type="range"-->
-            <!--                    />-->
-            <!--                    {{ data.jumprun.shift }}nm-->
-            <!--                </label>-->
-
-            <!--                <label>-->
-            <!--                    Angle-->
-            <!--                    <input-->
-            <!--                        v-model.number="data.jumprun.angle"-->
-            <!--                        min="0"-->
-            <!--                        max="360"-->
-            <!--                        type="range"-->
-            <!--                    />-->
-            <!--                    {{ data.jumprun.angle }}°-->
-            <!--                </label>-->
-            <!--            </div>-->
-
             <button :class="$style.button" type="submit">Save</button>
         </form>
     </div>
@@ -148,9 +99,4 @@ const save = () => {
     margin-bottom: 20px;
 }
 
-.jumprunSliders {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-}
 </style>
