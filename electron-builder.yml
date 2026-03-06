@@ -19,7 +19,7 @@ win:
 
 mac:
   target: dmg
-  icon: electron/icon.png
+  icon: electron/icon.icns
   category: public.app-category.utilities
 
 nsis:
