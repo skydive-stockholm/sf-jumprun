@@ -40,4 +40,16 @@ describe('storage', () => {
         storage.save({ b: 2 })
         expect(storage.fetch()).toEqual({ b: 2 })
     })
+
+    it('returns empty object when file exists but is empty', () => {
+        fs.writeFileSync(testFilePath, '')
+        const result = storage.fetch()
+        expect(result).toEqual({})
+    })
+
+    it('returns empty object when file contains invalid JSON', () => {
+        fs.writeFileSync(testFilePath, '{broken')
+        const result = storage.fetch()
+        expect(result).toEqual({})
+    })
 })

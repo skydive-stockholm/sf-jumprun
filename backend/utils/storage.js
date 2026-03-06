@@ -11,7 +11,7 @@ export function createStorage(filePath = defaultPath) {
             try {
                 return JSON.parse(fs.readFileSync(filePath).toString())
             } catch (error) {
-                if (error.code === 'ENOENT') {
+                if (error.code === 'ENOENT' || error instanceof SyntaxError) {
                     fs.writeFileSync(filePath, JSON.stringify({}))
                     return {}
                 }
