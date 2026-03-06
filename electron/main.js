@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron')
+const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { pathToFileURL } = require('url')
 
@@ -65,6 +66,24 @@ app.whenReady().then(async () => {
     await startBackendServer()
     createWindow()
     createTray()
+
+    autoUpdater.checkForUpdatesAndNotify()
+
+    autoUpdater.on('update-available', () => {
+        mainWindow?.webContents.send('update-available')
+    })
+
+    autoUpdater.on('update-downloaded', () => {
+        mainWindow?.webContents.send('update-downloaded')
+    })
+
+    ipcMain.on('install-update', () => {
+        autoUpdater.quitAndInstall()
+    })
+
+    ipcMain.handle('get-app-version', () => {
+        return app.getVersion()
+    })
 })
 
 app.on('window-all-closed', () => {

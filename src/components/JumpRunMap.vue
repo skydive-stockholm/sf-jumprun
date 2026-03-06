@@ -16,6 +16,7 @@ import { useServerEvents } from '../composables/useServerEvents.js'
 import { useDragHandles } from '../composables/useDragHandles.js'
 import { useViewMode } from '../composables/useViewMode.js'
 import ViewToggle from './ViewToggle.vue'
+import UpdateNotification from './UpdateNotification.vue'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -193,6 +194,7 @@ const save = () => {
 
 <template>
     <div :class="$style.map">
+        <UpdateNotification />
         <img
             src="../assets/north-arrow.svg"
             alt="Compass"
