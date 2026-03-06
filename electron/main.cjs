@@ -90,7 +90,11 @@ app.whenReady().then(async () => {
 })
 
 app.on('activate', () => {
-    mainWindow?.show()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show()
+    } else {
+        createWindow()
+    }
 })
 
 app.on('window-all-closed', () => {
