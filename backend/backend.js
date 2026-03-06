@@ -1,5 +1,6 @@
 import express from 'express'
 import storage from './utils/storage.js'
+import { sanitizeStorage } from './utils/sanitize.js'
 import { addClient, sendEventsToAll } from './sse.js'
 import { initSerial } from './serial.js'
 import * as fs from 'node:fs'
@@ -36,29 +37,6 @@ publicApp.get('/api/storage', (req, res) => {
     const data = storage.fetch()
     res.send(data)
 })
-
-function sanitizeStorage(body) {
-    const result = {}
-
-    if (body.staff) {
-        result.staff = {
-            manifestor: String(body.staff.manifestor || ''),
-            jumpLeader: String(body.staff.jumpLeader || ''),
-            pilot: String(body.staff.pilot || ''),
-        }
-    }
-
-    if (body.jumprun) {
-        result.jumprun = {
-            start: Number(body.jumprun.start) || 0,
-            end: Number(body.jumprun.end) || 0,
-            shift: Number(body.jumprun.shift) || 0,
-            angle: Number(body.jumprun.angle) || 0,
-        }
-    }
-
-    return result
-}
 
 privateApp.post('/api/storage', (req, res) => {
     const data = storage.fetch()
