@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Jump run visualization for Skydive Stockholm",
     "author": "Skydive Stockholm",
-    "main": "electron/main.js",
+    "main": "electron/main.cjs",
     "type": "module",
     "scripts": {
         "dev": "vite --port 3000",
