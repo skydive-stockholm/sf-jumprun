@@ -1,12 +1,17 @@
 <script setup>
-import { useViewMode } from '../composables/useViewMode.js'
+import { useRouter, useRoute } from 'vue-router'
 
-const { viewMode, toggle } = useViewMode()
+const router = useRouter()
+const route = useRoute()
+
+function toggle() {
+    router.push(route.path === '/admin' ? '/' : '/admin')
+}
 </script>
 
 <template>
     <button :class="$style.toggle" @click="toggle">
-        {{ viewMode === 'admin' ? 'Public View' : 'Admin View' }}
+        {{ route.path === '/admin' ? 'Public View' : 'Admin View' }}
     </button>
 </template>
 

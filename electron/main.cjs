@@ -28,7 +28,8 @@ function createWindow() {
         },
     })
 
-    mainWindow.loadURL(isDev ? 'http://localhost:3000' : 'http://localhost:3008')
+    const base = isDev ? 'http://localhost:3000' : 'http://localhost:3008'
+    mainWindow.loadURL(`${base}/admin`)
 
     mainWindow.on('close', (event) => {
         if (process.platform === 'win32') {

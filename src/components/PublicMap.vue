@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
@@ -11,17 +11,11 @@ import {
 } from '../utils/geometry.js'
 import { setMapCenter } from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
-import AdminPanel from '../AdminPanel.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
-import { useDragHandles } from '../composables/useDragHandles.js'
-import ViewToggle from './ViewToggle.vue'
-import UpdateNotification from './UpdateNotification.vue'
-import SettingsPanel from './SettingsPanel.vue'
-import OnboardingScreen from './OnboardingScreen.vue'
 
 const isConnected = ref(false)
-const adminDialog = ref(null)
 const map = ref(null)
+const configError = ref(false)
 const data = reactive({
     staff: {
         manifestor: '',
@@ -36,20 +30,7 @@ const data = reactive({
     },
 })
 
-const hasUnsavedChanges = ref(false)
-const isDragging = ref(false)
-let dragHandles = null
-
 const settings = reactive({ mapboxApiKey: '', mapCenter: '' })
-const needsOnboarding = ref(false)
-
-const toggleAdminDialog = () => {
-    if (adminDialog.value.open) {
-        adminDialog.value.close()
-    } else {
-        adminDialog.value.showModal()
-    }
-}
 
 async function loadSettings() {
     try {
@@ -71,7 +52,7 @@ function getMapCenter() {
 
 function initMap() {
     if (!settings.mapboxApiKey) {
-        needsOnboarding.value = true
+        configError.value = true
         return null
     }
 
@@ -90,13 +71,6 @@ function initMap() {
         center,
         zoom,
     })
-}
-
-async function completeOnboarding() {
-    needsOnboarding.value = false
-    await loadSettings()
-    await nextTick()
-    startMap()
 }
 
 function initMapFeatures(m) {
@@ -118,18 +92,13 @@ function initMapFeatures(m) {
 
 let serverEventsClose
 
-function startMap() {
+onMounted(async () => {
+    await loadSettings()
     map.value = initMap()
     if (!map.value) return
 
     map.value.on('load', () => {
         initMapFeatures(map.value)
-
-        dragHandles = useDragHandles(map.value, data.jumprun, {
-            hasUnsavedChanges,
-            isDragging,
-        })
-        dragHandles.init()
 
         const { close } = useServerEvents((res) => {
             if (!res.jumprun) return
@@ -137,8 +106,6 @@ function startMap() {
             if (res.staff) {
                 data.staff = res.staff
             }
-
-            if (isDragging.value || hasUnsavedChanges.value) return
 
             if (
                 JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)
@@ -155,56 +122,27 @@ function startMap() {
                 data.jumprun.shift,
                 data.jumprun.angle,
             )
-
-            dragHandles?.updatePositions()
         }, isConnected)
         serverEventsClose = close
     })
-}
-
-onMounted(async () => {
-    await loadSettings()
-    startMap()
 })
 
 onUnmounted(() => {
     serverEventsClose?.()
-    dragHandles?.remove()
     map.value?.remove()
 })
-
-const save = () => {
-    const raw = { staff: { ...data.staff }, jumprun: { ...data.jumprun } }
-    fetch('http://localhost:3009/api/storage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(raw),
-    })
-    hasUnsavedChanges.value = false
-}
 </script>
 
 <template>
-    <OnboardingScreen v-if="needsOnboarding" @complete="completeOnboarding" />
+    <div v-if="configError" :class="$style.errorScreen">
+        Mapbox API key not configured. Ask an admin to set it up.
+    </div>
     <div v-else :class="$style.map">
-        <UpdateNotification />
         <img
             src="../assets/north-arrow.svg"
             alt="Compass"
             :class="$style.compass"
         />
-
-        <dialog ref="adminDialog" :class="$style.adminDialog">
-            <AdminPanel
-                v-model:manifestor="data.staff.manifestor"
-                v-model:jump-leader="data.staff.jumpLeader"
-                v-model:pilot="data.staff.pilot"
-                @close="toggleAdminDialog"
-                @save="save"
-            />
-            <hr :class="$style.divider" />
-            <SettingsPanel />
-        </dialog>
 
         <div :class="$style.mapContainer">
             <div id="map" :class="$style.mapBox"></div>
@@ -212,17 +150,8 @@ const save = () => {
             <JumpRunInfoBox
                 :staff="data.staff || null"
                 :jumprun="data.jumprun || null"
-                @click="toggleAdminDialog"
             />
         </div>
-
-        <button
-            v-if="hasUnsavedChanges"
-            :class="$style.saveButton"
-            @click="save"
-        >
-            Save jump run
-        </button>
 
         <div v-if="isConnected" :class="$style.connectionMessage">
             <div :class="[$style.connectionDot, $style.active]"></div>
@@ -232,11 +161,22 @@ const save = () => {
             <div :class="[$style.connectionDot, $style.inactive]"></div>
             Not connected
         </div>
-        <ViewToggle />
     </div>
 </template>
 
 <style module>
+.errorScreen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a2e;
+    color: #999;
+    font-family: monospace;
+    font-size: 16px;
+}
+
 .map {
     width: 100vw;
     height: 100vh;
@@ -274,26 +214,6 @@ const save = () => {
     }
 }
 
-.adminDialog {
-    z-index: 1000;
-    position: fixed;
-    border: 0;
-    border-bottom-right-radius: 8px;
-    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.2);
-}
-
-.divider {
-    border: none;
-    border-top: 1px solid #ddd;
-    margin: 12px 10px;
-}
-
-.adminDialog::backdrop {
-    background-color: rgba(0, 0, 0, 0);
-    pointer-events: auto;
-    display: none;
-}
-
 .connectionMessage {
     position: fixed;
     z-index: 1000;
@@ -316,32 +236,5 @@ const save = () => {
 
 .connectionDot.active {
     background-color: green;
-}
-
-.saveButton {
-    position: fixed;
-    z-index: 1000;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 24px;
-    background: #4a8af4;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(74, 138, 244, 0.5);
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-.saveButton:hover {
-    background: #6aa0ff;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 10px rgba(74, 138, 244, 0.5); }
-    50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 30px rgba(74, 138, 244, 0.9), 0 0 60px rgba(74, 138, 244, 0.4); }
 }
 </style>
