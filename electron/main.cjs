@@ -3,6 +3,7 @@ const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { pathToFileURL } = require('url')
 
+const isDev = !app.isPackaged
 let mainWindow
 let tray
 
@@ -27,7 +28,7 @@ function createWindow() {
         },
     })
 
-    mainWindow.loadURL('http://localhost:3008')
+    mainWindow.loadURL(isDev ? 'http://localhost:3000' : 'http://localhost:3008')
 
     mainWindow.on('close', (event) => {
         event.preventDefault()
