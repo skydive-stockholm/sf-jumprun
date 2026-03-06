@@ -230,7 +230,7 @@ const save = () => {
 
 <template>
     <OnboardingScreen
-        v-if="needsOnboarding && isAdmin"
+        v-if="needsOnboarding && isElectron"
         @complete="completeOnboarding"
     />
     <div v-else-if="needsOnboarding" :class="$style.errorScreen">
