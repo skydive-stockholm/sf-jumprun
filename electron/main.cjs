@@ -31,8 +31,10 @@ function createWindow() {
     mainWindow.loadURL(isDev ? 'http://localhost:3000' : 'http://localhost:3008')
 
     mainWindow.on('close', (event) => {
-        event.preventDefault()
-        mainWindow.hide()
+        if (process.platform === 'win32') {
+            event.preventDefault()
+            mainWindow.hide()
+        }
     })
 }
 
@@ -85,6 +87,10 @@ app.whenReady().then(async () => {
     ipcMain.handle('get-app-version', () => {
         return app.getVersion()
     })
+})
+
+app.on('activate', () => {
+    mainWindow?.show()
 })
 
 app.on('window-all-closed', () => {
