@@ -1,5 +1,5 @@
 import { reactive, ref } from 'vue'
-import axios from 'axios'
+
 import { windDirection, roundNumber } from '../utils/weather.js'
 
 export const useWeather = () => {
@@ -32,9 +32,10 @@ export const useWeather = () => {
     }
 
     function fetchWeather() {
-        axios.get(weatherApiUrl).then(({ data }) => {
-            setData(data)
-        })
+        fetch(weatherApiUrl)
+            .then((res) => res.json())
+            .then((data) => setData(data))
+            .catch(() => {})
     }
 
     // Fetch the weather on created

@@ -1,13 +1,15 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
-import axios from 'axios'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
     addTextToMap,
+    calcJumpRunParams,
+    calcShiftFromMidpoint,
     createCircleFeature,
     createJumprunFeature,
     createLineFeature,
+    getJumpRunEndpoints,
     updateJumpRun,
 } from '../utils/geometry.js'
 import coordinates from '../data/coordinates.js'
@@ -27,10 +29,10 @@ const data = reactive({
         pilot: '',
     },
     jumprun: {
-        start: 0,
-        end: 0,
+        start: -0.2,
+        end: 0.2,
         shift: 0,
-        angle: 0,
+        angle: 30,
     },
 })
 
@@ -45,6 +47,157 @@ const toggleAdminDialog = () => {
     } else {
         adminDialog.value.showModal()
     }
+}
+
+const isAdmin = window.location.hostname === 'localhost'
+const hasUnsavedChanges = ref(false)
+const isDragging = ref(false)
+let startMarker, endMarker, midMarker
+
+function createDragHandle(color) {
+    const el = document.createElement('div')
+    el.style.width = '20px'
+    el.style.height = '20px'
+    el.style.borderRadius = '50%'
+    el.style.backgroundColor = color
+    el.style.border = '3px solid white'
+    el.style.cursor = 'grab'
+    el.style.boxShadow = '0 0 6px rgba(0,0,0,0.5)'
+    return el
+}
+
+function initDragHandles(mapInstance) {
+    const endpoints = getJumpRunEndpoints(
+        data.jumprun.start,
+        data.jumprun.end,
+        data.jumprun.shift,
+        data.jumprun.angle,
+    )
+
+    startMarker = new mapboxgl.Marker({
+        element: createDragHandle('#00ff00'),
+        draggable: true,
+    })
+        .setLngLat(endpoints.start)
+        .addTo(mapInstance)
+
+    endMarker = new mapboxgl.Marker({
+        element: createDragHandle('#ff0000'),
+        draggable: true,
+    })
+        .setLngLat(endpoints.end)
+        .addTo(mapInstance)
+
+    midMarker = new mapboxgl.Marker({
+        element: createDragHandle('#ffffff'),
+        draggable: true,
+    })
+        .setLngLat(endpoints.mid)
+        .addTo(mapInstance)
+
+    const onDragStart = () => {
+        isDragging.value = true
+    }
+    const onDragEnd = () => {
+        isDragging.value = false
+        hasUnsavedChanges.value = true
+        updateDragHandles()
+    }
+
+    startMarker.on('dragstart', onDragStart)
+    endMarker.on('dragstart', onDragStart)
+    midMarker.on('dragstart', onDragStart)
+
+    startMarker.on('dragend', onDragEnd)
+    endMarker.on('dragend', onDragEnd)
+    midMarker.on('dragend', onDragEnd)
+
+    startMarker.on('drag', () => {
+        const sl = startMarker.getLngLat()
+        const el = endMarker.getLngLat()
+        const params = calcJumpRunParams(
+            [sl.lng, sl.lat],
+            [el.lng, el.lat],
+            data.jumprun.angle,
+        )
+        data.jumprun = params
+        updateJumpRun(
+            mapInstance,
+            params.start,
+            params.end,
+            params.shift,
+            params.angle,
+        )
+        const ep = getJumpRunEndpoints(
+            params.start,
+            params.end,
+            params.shift,
+            params.angle,
+        )
+        midMarker.setLngLat(ep.mid)
+    })
+
+    endMarker.on('drag', () => {
+        const sl = startMarker.getLngLat()
+        const el = endMarker.getLngLat()
+        const params = calcJumpRunParams(
+            [sl.lng, sl.lat],
+            [el.lng, el.lat],
+            data.jumprun.angle,
+        )
+        data.jumprun = params
+        updateJumpRun(
+            mapInstance,
+            params.start,
+            params.end,
+            params.shift,
+            params.angle,
+        )
+        const ep = getJumpRunEndpoints(
+            params.start,
+            params.end,
+            params.shift,
+            params.angle,
+        )
+        midMarker.setLngLat(ep.mid)
+    })
+
+    midMarker.on('drag', () => {
+        const ml = midMarker.getLngLat()
+        const shift = calcShiftFromMidpoint(
+            [ml.lng, ml.lat],
+            data.jumprun.angle,
+        )
+        data.jumprun.shift = shift
+        updateJumpRun(
+            mapInstance,
+            data.jumprun.start,
+            data.jumprun.end,
+            shift,
+            data.jumprun.angle,
+        )
+        const ep = getJumpRunEndpoints(
+            data.jumprun.start,
+            data.jumprun.end,
+            shift,
+            data.jumprun.angle,
+        )
+        startMarker.setLngLat(ep.start)
+        endMarker.setLngLat(ep.end)
+    })
+}
+
+function updateDragHandles() {
+    if (!startMarker) return
+    const ep = getJumpRunEndpoints(
+        data.jumprun.start,
+        data.jumprun.end,
+        data.jumprun.shift,
+        data.jumprun.angle,
+    )
+    startMarker.setLngLat(ep.start)
+    endMarker.setLngLat(ep.end)
+    midMarker.setLngLat(ep.mid)
 }
 
 function initMap() {
@@ -72,36 +225,57 @@ function initMap() {
 }
 
 function initServerEvents(onUpdate) {
-    const evtSource = new EventSource(
-        `http://${import.meta.env.VITE_HOST}:3008/subscribe`,
-    )
+    let evtSource
+    let reconnectTimeout
+    let pollingInterval
 
-    evtSource.onopen = () => {
-        isConnected.value = true
-    }
+    function connect() {
+        evtSource = new EventSource(
+            `http://${import.meta.env.VITE_HOST}:3008/subscribe`,
+        )
 
-    evtSource.onerror = () => {
-        isConnected.value = false
-        evtSource.close()
-    }
-
-    evtSource.onmessage = event => {
-        onUpdate(JSON.parse(event.data), event)
-    }
-
-    // Fallback to server events
-    setInterval(async () => {
-        if (isConnected.value === true) {
-            return
+        evtSource.onopen = () => {
+            isConnected.value = true
+            if (pollingInterval) {
+                clearInterval(pollingInterval)
+                pollingInterval = null
+            }
         }
 
-        const res = await axios.get(
-            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
-        )
-        onUpdate(res.data)
-    }, 1000)
+        evtSource.onerror = () => {
+            isConnected.value = false
+            evtSource.close()
 
-    return evtSource
+            if (!pollingInterval) {
+                pollingInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch(
+                            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
+                        )
+                        onUpdate(await res.json())
+                    } catch {
+                        // Server still unavailable
+                    }
+                }, 1000)
+            }
+
+            reconnectTimeout = setTimeout(connect, 5000)
+        }
+
+        evtSource.onmessage = event => {
+            onUpdate(JSON.parse(event.data))
+        }
+    }
+
+    connect()
+
+    return {
+        close() {
+            evtSource?.close()
+            if (reconnectTimeout) clearTimeout(reconnectTimeout)
+            if (pollingInterval) clearInterval(pollingInterval)
+        },
+    }
 }
 
 function initMapFeatures(map) {
@@ -118,7 +292,7 @@ function initMapFeatures(map) {
     ;['x', 'y'].forEach(axis => createLineFeature(map, axis))
 
     // Create jumprun arrow
-    createJumprunFeature(map, 0, 0, 0, 30)
+    createJumprunFeature(map, -0.2, 0.2, 0, 30)
 
     // Add text 1 nautical mile north of the map center
     addTextToMap(map, '360°', 0)
@@ -133,20 +307,35 @@ function initMapFeatures(map) {
     addTextToMap(map, '270°', 270)
 }
 const eventSource = ref(null)
+
 onMounted(() => {
     map.value = initMap()
     map.value.on('load', () => {
         initMapFeatures(map.value)
-        eventSource.value = initServerEvents(res => {
-            if (JSON.stringify(data) === JSON.stringify(res)) {
-                return
-            }
 
+        if (isAdmin) {
+            initDragHandles(map.value)
+        }
+
+        eventSource.value = initServerEvents(res => {
             if (!res.jumprun) {
                 return
             }
 
-            data.staff = res.staff
+            if (res.staff) {
+                data.staff = res.staff
+            }
+
+            if (isDragging.value || hasUnsavedChanges.value) {
+                return
+            }
+
+            if (
+                JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)
+            ) {
+                return
+            }
+
             data.jumprun = res.jumprun
 
             updateJumpRun(
@@ -156,17 +345,28 @@ onMounted(() => {
                 data.jumprun.shift,
                 data.jumprun.angle,
             )
-        })
-    })
 
-    onUnmounted(() => {
-        eventSource.value.close()
-        map.value.remove()
+            if (isAdmin) updateDragHandles()
+        })
     })
 })
 
+onUnmounted(() => {
+    eventSource.value?.close()
+    if (startMarker) startMarker.remove()
+    if (endMarker) endMarker.remove()
+    if (midMarker) midMarker.remove()
+    map.value?.remove()
+})
+
 const save = () => {
-    axios.post(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, data)
+    const raw = { staff: { ...data.staff }, jumprun: { ...data.jumprun } }
+    fetch(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(raw),
+    })
+    hasUnsavedChanges.value = false
 }
 </script>
 
@@ -199,6 +399,14 @@ const save = () => {
                 @click="toggleAdminDialog"
             />
         </div>
+
+        <button
+            v-if="hasUnsavedChanges"
+            :class="$style.saveButton"
+            @click="save"
+        >
+            Save jump run
+        </button>
 
         <div v-if="isConnected" :class="$style.connectionMessage">
             <div :class="[$style.connectionDot, $style.active]"></div>
@@ -298,5 +506,32 @@ const save = () => {
 
 .connectionDot.active {
     background-color: green;
+}
+
+.saveButton {
+    position: fixed;
+    z-index: 1000;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: #4a8af4;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(74, 138, 244, 0.5);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.saveButton:hover {
+    background: #6aa0ff;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 10px rgba(74, 138, 244, 0.5); }
+    50% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 30px rgba(74, 138, 244, 0.9), 0 0 60px rgba(74, 138, 244, 0.4); }
 }
 </style>

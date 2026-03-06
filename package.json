@@ -33,8 +33,6 @@
         "@heroicons/vue": "^2.0.18",
         "@turf/circle": "^6.5.0",
         "@turf/turf": "^6.5.0",
-        "axios": "^1.4.0",
-        "lodash": "^4.17.21",
         "mapbox-gl": "^2.15.0",
         "vue": "^3.2.47",
         "vue-router": "4"
