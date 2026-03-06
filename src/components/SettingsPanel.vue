@@ -8,7 +8,7 @@ const saved = ref(false)
 onMounted(async () => {
     try {
         const res = await fetch(
-            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
+            `http://localhost:3008/api/storage`,
         )
         const data = await res.json()
         if (data.settings) {
@@ -21,7 +21,7 @@ onMounted(async () => {
 })
 
 async function save() {
-    await fetch(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, {
+    await fetch(`http://localhost:3009/api/storage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -61,7 +61,7 @@ async function save() {
             </label>
 
             <p :class="$style.hint">
-                Changes take effect after restarting the app.
+                Changes take effect after reloading the page.
             </p>
 
             <button :class="$style.button" type="submit">

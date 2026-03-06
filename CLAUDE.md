@@ -51,11 +51,10 @@ A skydiving jump run visualization app for a Swedish drop zone (Skydive Stockhol
 ### Data Flow
 Hardware serial device → backend parses → writes `data.json` → fs.watch triggers → SSE broadcast → frontend updates map. Admin panel (localhost) → POST to private port 3009 → saves to `data.json` → same broadcast path.
 
-## Environment Variables (`.env`)
-- `VITE_HOST` — Backend host for SSE/API connections (e.g., `localhost`)
-- `VITE_MAPBOX_API_KEY` — Mapbox GL access token
-- `VITE_MAP_CENTER` — Lng,Lat of drop zone center (default: Gryttjom)
-- `AZURE_STORAGE_ACC`, `AZURE_STORAGE_TABLE`, `AZURE_SAS_TOKEN` — Azure Table Storage credentials for data upload
+## Settings
+- Mapbox API key and map center are configured via the **Settings panel** in the admin UI (stored in `data.json`)
+- On first launch, an onboarding screen prompts for these settings
+- `.env` file is **deprecated** — only Azure credentials remain there (`AZURE_STORAGE_ACC`, `AZURE_STORAGE_TABLE`, `AZURE_SAS_TOKEN`)
 
 ## Code Style
 - Prettier: 4-space indent, no semicolons, single quotes, trailing commas

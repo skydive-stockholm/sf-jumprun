@@ -7,7 +7,7 @@ export function useServerEvents(onUpdate, isConnected = ref(false)) {
 
     function connect() {
         evtSource = new EventSource(
-            `http://${import.meta.env.VITE_HOST}:3008/subscribe`,
+            `http://localhost:3008/subscribe`,
         )
 
         evtSource.onopen = () => {
@@ -26,7 +26,7 @@ export function useServerEvents(onUpdate, isConnected = ref(false)) {
                 pollingInterval = setInterval(async () => {
                     try {
                         const res = await fetch(
-                            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
+                            `http://localhost:3008/api/storage`,
                         )
                         onUpdate(await res.json())
                     } catch {

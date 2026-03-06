@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
@@ -9,6 +9,7 @@ import {
     createLineFeature,
     updateJumpRun,
 } from '../utils/geometry.js'
+import { setMapCenter } from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
@@ -17,6 +18,7 @@ import { useViewMode } from '../composables/useViewMode.js'
 import ViewToggle from './ViewToggle.vue'
 import UpdateNotification from './UpdateNotification.vue'
 import SettingsPanel from './SettingsPanel.vue'
+import OnboardingScreen from './OnboardingScreen.vue'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -59,35 +61,35 @@ const isDragging = ref(false)
 let dragHandles = null
 
 const settings = reactive({ mapboxApiKey: '', mapCenter: '' })
+const needsOnboarding = ref(false)
 
 async function loadSettings() {
     try {
-        const res = await fetch(
-            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
-        )
+        const res = await fetch('http://localhost:3008/api/storage')
         const stored = await res.json()
         if (stored.settings) {
             settings.mapboxApiKey = stored.settings.mapboxApiKey || ''
             settings.mapCenter = stored.settings.mapCenter || ''
         }
     } catch {
-        // Use env var fallbacks
+        // Backend not available yet
     }
 }
 
 function getMapCenter() {
-    const raw = settings.mapCenter || import.meta.env.VITE_MAP_CENTER || '17.42929, 60.28519'
+    const raw = settings.mapCenter || '17.42929, 60.28519'
     return raw.replace(/ /g, '').split(',').map(parseFloat)
 }
 
 function initMap() {
-    const apiKey = settings.mapboxApiKey || import.meta.env.VITE_MAPBOX_API_KEY
-
-    if (!apiKey) {
-        throw new Error('No Mapbox API key configured. Set it in Settings or VITE_MAPBOX_API_KEY.')
+    if (!settings.mapboxApiKey) {
+        needsOnboarding.value = true
+        return null
     }
 
-    mapboxgl.accessToken = apiKey
+    const center = getMapCenter()
+    setMapCenter(center)
+    mapboxgl.accessToken = settings.mapboxApiKey
 
     let zoom = 13.5
     if (window.innerWidth < 768) {
@@ -97,9 +99,16 @@ function initMap() {
     return new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12?optimize=true',
-        center: getMapCenter(),
+        center,
         zoom: zoom,
     })
+}
+
+async function completeOnboarding() {
+    needsOnboarding.value = false
+    await loadSettings()
+    await nextTick()
+    startMap()
 }
 
 function initMapFeatures(map) {
@@ -132,9 +141,10 @@ function initMapFeatures(map) {
 }
 let serverEventsClose
 
-onMounted(async () => {
-    await loadSettings()
+function startMap() {
     map.value = initMap()
+    if (!map.value) return
+
     map.value.on('load', () => {
         initMapFeatures(map.value)
 
@@ -179,6 +189,11 @@ onMounted(async () => {
         }, isConnected)
         serverEventsClose = close
     })
+}
+
+onMounted(async () => {
+    await loadSettings()
+    startMap()
 })
 
 watch(isAdmin, (newVal) => {
@@ -204,7 +219,7 @@ onUnmounted(() => {
 
 const save = () => {
     const raw = { staff: { ...data.staff }, jumprun: { ...data.jumprun } }
-    fetch(`http://${import.meta.env.VITE_HOST}:3009/api/storage`, {
+    fetch('http://localhost:3009/api/storage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(raw),
@@ -214,7 +229,8 @@ const save = () => {
 </script>
 
 <template>
-    <div :class="$style.map">
+    <OnboardingScreen v-if="needsOnboarding" @complete="completeOnboarding" />
+    <div v-else :class="$style.map">
         <UpdateNotification />
         <img
             src="../assets/north-arrow.svg"
