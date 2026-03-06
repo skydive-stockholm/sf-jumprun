@@ -139,7 +139,7 @@ onMounted(() => {
                 return
             }
 
-            data.jumprun = res.jumprun
+            Object.assign(data.jumprun, res.jumprun)
 
             updateJumpRun(
                 map.value,
