@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
@@ -14,6 +14,8 @@ import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
 import { useDragHandles } from '../composables/useDragHandles.js'
+import { useViewMode } from '../composables/useViewMode.js'
+import ViewToggle from './ViewToggle.vue'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -35,11 +37,15 @@ const data = reactive({
     },
 })
 
+const isElectron = !!window.electronAPI
+const { viewMode } = useViewMode()
+const isAdmin = computed(() => {
+    if (isElectron) return viewMode.value === 'admin'
+    return window.location.hostname === 'localhost'
+})
+
 const toggleAdminDialog = () => {
-    // Only show admin dialog on localhost
-    if (window.location.hostname !== 'localhost') {
-        return
-    }
+    if (!isAdmin.value) return
 
     if (adminDialog.value.open) {
         adminDialog.value.close()
@@ -47,8 +53,6 @@ const toggleAdminDialog = () => {
         adminDialog.value.showModal()
     }
 }
-
-const isAdmin = window.location.hostname === 'localhost'
 const hasUnsavedChanges = ref(false)
 const isDragging = ref(false)
 let dragHandles = null
@@ -112,7 +116,7 @@ onMounted(() => {
     map.value.on('load', () => {
         initMapFeatures(map.value)
 
-        if (isAdmin) {
+        if (isAdmin.value) {
             dragHandles = useDragHandles(map.value, data.jumprun, {
                 hasUnsavedChanges,
                 isDragging,
@@ -149,10 +153,25 @@ onMounted(() => {
                 data.jumprun.angle,
             )
 
-            if (isAdmin) dragHandles?.updatePositions()
+            if (isAdmin.value) dragHandles?.updatePositions()
         }, isConnected)
         serverEventsClose = close
     })
+})
+
+watch(isAdmin, (newVal) => {
+    if (!map.value) return
+    if (newVal) {
+        dragHandles = useDragHandles(map.value, data.jumprun, {
+            hasUnsavedChanges,
+            isDragging,
+        })
+        dragHandles.init()
+    } else {
+        dragHandles?.remove()
+        dragHandles = null
+        hasUnsavedChanges.value = false
+    }
 })
 
 onUnmounted(() => {
@@ -181,7 +200,7 @@ const save = () => {
         />
 
         <!-- A modal dialog containing a form -->
-        <dialog ref="adminDialog" :class="$style.adminDialog">
+        <dialog v-if="isAdmin" ref="adminDialog" :class="$style.adminDialog">
             <AdminPanel
                 v-model:manifestor="data.staff.manifestor"
                 v-model:jump-leader="data.staff.jumpLeader"
@@ -220,6 +239,7 @@ const save = () => {
 
             Not connected
         </div>
+        <ViewToggle v-if="isElectron" />
     </div>
 </template>
 
