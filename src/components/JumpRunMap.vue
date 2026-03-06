@@ -15,6 +15,7 @@ import {
 import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
+import { useServerEvents } from '../composables/useServerEvents.js'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -224,60 +225,6 @@ function initMap() {
     })
 }
 
-function initServerEvents(onUpdate) {
-    let evtSource
-    let reconnectTimeout
-    let pollingInterval
-
-    function connect() {
-        evtSource = new EventSource(
-            `http://${import.meta.env.VITE_HOST}:3008/subscribe`,
-        )
-
-        evtSource.onopen = () => {
-            isConnected.value = true
-            if (pollingInterval) {
-                clearInterval(pollingInterval)
-                pollingInterval = null
-            }
-        }
-
-        evtSource.onerror = () => {
-            isConnected.value = false
-            evtSource.close()
-
-            if (!pollingInterval) {
-                pollingInterval = setInterval(async () => {
-                    try {
-                        const res = await fetch(
-                            `http://${import.meta.env.VITE_HOST}:3008/api/storage`,
-                        )
-                        onUpdate(await res.json())
-                    } catch {
-                        // Server still unavailable
-                    }
-                }, 1000)
-            }
-
-            reconnectTimeout = setTimeout(connect, 5000)
-        }
-
-        evtSource.onmessage = event => {
-            onUpdate(JSON.parse(event.data))
-        }
-    }
-
-    connect()
-
-    return {
-        close() {
-            evtSource?.close()
-            if (reconnectTimeout) clearTimeout(reconnectTimeout)
-            if (pollingInterval) clearInterval(pollingInterval)
-        },
-    }
-}
-
 function initMapFeatures(map) {
     // Create circles with 0.1 nautical miles in between each one
     for (let i = 0.1; i <= 1.5; i = i + 0.1) {
@@ -306,7 +253,7 @@ function initMapFeatures(map) {
     // Add text 1 nautical mile west of the map center
     addTextToMap(map, '270°', 270)
 }
-const eventSource = ref(null)
+let serverEventsClose
 
 onMounted(() => {
     map.value = initMap()
@@ -317,7 +264,7 @@ onMounted(() => {
             initDragHandles(map.value)
         }
 
-        eventSource.value = initServerEvents(res => {
+        const { close } = useServerEvents((res) => {
             if (!res.jumprun) {
                 return
             }
@@ -347,12 +294,13 @@ onMounted(() => {
             )
 
             if (isAdmin) updateDragHandles()
-        })
+        }, isConnected)
+        serverEventsClose = close
     })
 })
 
 onUnmounted(() => {
-    eventSource.value?.close()
+    serverEventsClose?.()
     if (startMarker) startMarker.remove()
     if (endMarker) endMarker.remove()
     if (midMarker) midMarker.remove()
