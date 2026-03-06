@@ -229,7 +229,13 @@ const save = () => {
 </script>
 
 <template>
-    <OnboardingScreen v-if="needsOnboarding" @complete="completeOnboarding" />
+    <OnboardingScreen
+        v-if="needsOnboarding && isAdmin"
+        @complete="completeOnboarding"
+    />
+    <div v-else-if="needsOnboarding" :class="$style.errorScreen">
+        Mapbox API key not configured. Ask an admin to set it up.
+    </div>
     <div v-else :class="$style.map">
         <UpdateNotification />
         <img
@@ -285,6 +291,18 @@ const save = () => {
 </template>
 
 <style module>
+.errorScreen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a2e;
+    color: #999;
+    font-family: monospace;
+    font-size: 16px;
+}
+
 .map {
     width: 100vw;
     height: 100vh;
