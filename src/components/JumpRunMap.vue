@@ -4,18 +4,16 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
 import {
     addTextToMap,
-    calcJumpRunParams,
-    calcShiftFromMidpoint,
     createCircleFeature,
     createJumprunFeature,
     createLineFeature,
-    getJumpRunEndpoints,
     updateJumpRun,
 } from '../utils/geometry.js'
 import coordinates from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import AdminPanel from '../AdminPanel.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
+import { useDragHandles } from '../composables/useDragHandles.js'
 
 // Is the server events connection open?
 const isConnected = ref(false)
@@ -53,153 +51,7 @@ const toggleAdminDialog = () => {
 const isAdmin = window.location.hostname === 'localhost'
 const hasUnsavedChanges = ref(false)
 const isDragging = ref(false)
-let startMarker, endMarker, midMarker
-
-function createDragHandle(color) {
-    const el = document.createElement('div')
-    el.style.width = '20px'
-    el.style.height = '20px'
-    el.style.borderRadius = '50%'
-    el.style.backgroundColor = color
-    el.style.border = '3px solid white'
-    el.style.cursor = 'grab'
-    el.style.boxShadow = '0 0 6px rgba(0,0,0,0.5)'
-    return el
-}
-
-function initDragHandles(mapInstance) {
-    const endpoints = getJumpRunEndpoints(
-        data.jumprun.start,
-        data.jumprun.end,
-        data.jumprun.shift,
-        data.jumprun.angle,
-    )
-
-    startMarker = new mapboxgl.Marker({
-        element: createDragHandle('#00ff00'),
-        draggable: true,
-    })
-        .setLngLat(endpoints.start)
-        .addTo(mapInstance)
-
-    endMarker = new mapboxgl.Marker({
-        element: createDragHandle('#ff0000'),
-        draggable: true,
-    })
-        .setLngLat(endpoints.end)
-        .addTo(mapInstance)
-
-    midMarker = new mapboxgl.Marker({
-        element: createDragHandle('#ffffff'),
-        draggable: true,
-    })
-        .setLngLat(endpoints.mid)
-        .addTo(mapInstance)
-
-    const onDragStart = () => {
-        isDragging.value = true
-    }
-    const onDragEnd = () => {
-        isDragging.value = false
-        hasUnsavedChanges.value = true
-        updateDragHandles()
-    }
-
-    startMarker.on('dragstart', onDragStart)
-    endMarker.on('dragstart', onDragStart)
-    midMarker.on('dragstart', onDragStart)
-
-    startMarker.on('dragend', onDragEnd)
-    endMarker.on('dragend', onDragEnd)
-    midMarker.on('dragend', onDragEnd)
-
-    startMarker.on('drag', () => {
-        const sl = startMarker.getLngLat()
-        const el = endMarker.getLngLat()
-        const params = calcJumpRunParams(
-            [sl.lng, sl.lat],
-            [el.lng, el.lat],
-            data.jumprun.angle,
-        )
-        data.jumprun = params
-        updateJumpRun(
-            mapInstance,
-            params.start,
-            params.end,
-            params.shift,
-            params.angle,
-        )
-        const ep = getJumpRunEndpoints(
-            params.start,
-            params.end,
-            params.shift,
-            params.angle,
-        )
-        midMarker.setLngLat(ep.mid)
-    })
-
-    endMarker.on('drag', () => {
-        const sl = startMarker.getLngLat()
-        const el = endMarker.getLngLat()
-        const params = calcJumpRunParams(
-            [sl.lng, sl.lat],
-            [el.lng, el.lat],
-            data.jumprun.angle,
-        )
-        data.jumprun = params
-        updateJumpRun(
-            mapInstance,
-            params.start,
-            params.end,
-            params.shift,
-            params.angle,
-        )
-        const ep = getJumpRunEndpoints(
-            params.start,
-            params.end,
-            params.shift,
-            params.angle,
-        )
-        midMarker.setLngLat(ep.mid)
-    })
-
-    midMarker.on('drag', () => {
-        const ml = midMarker.getLngLat()
-        const shift = calcShiftFromMidpoint(
-            [ml.lng, ml.lat],
-            data.jumprun.angle,
-        )
-        data.jumprun.shift = shift
-        updateJumpRun(
-            mapInstance,
-            data.jumprun.start,
-            data.jumprun.end,
-            shift,
-            data.jumprun.angle,
-        )
-        const ep = getJumpRunEndpoints(
-            data.jumprun.start,
-            data.jumprun.end,
-            shift,
-            data.jumprun.angle,
-        )
-        startMarker.setLngLat(ep.start)
-        endMarker.setLngLat(ep.end)
-    })
-}
-
-function updateDragHandles() {
-    if (!startMarker) return
-    const ep = getJumpRunEndpoints(
-        data.jumprun.start,
-        data.jumprun.end,
-        data.jumprun.shift,
-        data.jumprun.angle,
-    )
-    startMarker.setLngLat(ep.start)
-    endMarker.setLngLat(ep.end)
-    midMarker.setLngLat(ep.mid)
-}
+let dragHandles = null
 
 function initMap() {
     const viteMapboxApiKey = import.meta.env.VITE_MAPBOX_API_KEY
@@ -261,7 +113,11 @@ onMounted(() => {
         initMapFeatures(map.value)
 
         if (isAdmin) {
-            initDragHandles(map.value)
+            dragHandles = useDragHandles(map.value, data.jumprun, {
+                hasUnsavedChanges,
+                isDragging,
+            })
+            dragHandles.init()
         }
 
         const { close } = useServerEvents((res) => {
@@ -293,7 +149,7 @@ onMounted(() => {
                 data.jumprun.angle,
             )
 
-            if (isAdmin) updateDragHandles()
+            if (isAdmin) dragHandles?.updatePositions()
         }, isConnected)
         serverEventsClose = close
     })
@@ -301,9 +157,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     serverEventsClose?.()
-    if (startMarker) startMarker.remove()
-    if (endMarker) endMarker.remove()
-    if (midMarker) midMarker.remove()
+    dragHandles?.remove()
     map.value?.remove()
 })
 
