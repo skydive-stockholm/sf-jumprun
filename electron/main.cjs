@@ -39,9 +39,8 @@ function createWindow() {
 }
 
 function createTray() {
-    const icon = nativeImage.createFromDataURL(
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAABgSURBVDiNY/j//z8DEwMDAwMTAwMDw////xn+//9fwPD//38GBgYGhv///zMwMDAwMPz//5+BkZGBgYGR8f9/RkYGBkZGxv+MjIz/GRkZ/jMyMvxnZGT4z8jI8J+BgQEAq+YYSS/MkGYAAAAASUVORK5CYII=',
-    )
+    const iconPath = path.join(__dirname, 'icon.png')
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
 
     tray = new Tray(icon)
 
