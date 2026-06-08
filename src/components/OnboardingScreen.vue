@@ -3,25 +3,15 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['complete'])
 
-const mapboxApiKey = ref('')
 const mapCenter = ref('17.42929, 60.28519')
-const error = ref('')
 
 async function save() {
-    if (!mapboxApiKey.value.trim()) {
-        error.value = 'Mapbox API key is required'
-        return
-    }
-
-    error.value = ''
-
     await fetch('http://localhost:3009/api/storage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             settings: {
-                mapboxApiKey: mapboxApiKey.value.trim(),
-                mapCenter: mapCenter.value.trim(),
+                mapCenter: mapCenter.value.trim() || '17.42929, 60.28519',
             },
         }),
     })
@@ -39,26 +29,6 @@ async function save() {
             </p>
 
             <form :class="$style.form" @submit.prevent="save">
-                <label :class="$style.label">
-                    Mapbox API Key
-                    <input
-                        v-model="mapboxApiKey"
-                        type="text"
-                        placeholder="pk.eyJ1Ijo..."
-                        :class="[$style.input, error ? $style.inputError : '']"
-                        autofocus
-                    />
-                    <span v-if="error" :class="$style.error">{{ error }}</span>
-                    <span :class="$style.hint">
-                        Get a free key at
-                        <a
-                            href="https://account.mapbox.com"
-                            target="_blank"
-                            :class="$style.link"
-                        >account.mapbox.com</a>
-                    </span>
-                </label>
-
                 <label :class="$style.label">
                     Map Center (lng, lat)
                     <input
@@ -144,29 +114,10 @@ async function save() {
     box-shadow: 0 0 0 3px rgba(74, 138, 244, 0.15);
 }
 
-.inputError {
-    border-color: #e53935;
-}
-
-.error {
-    color: #e53935;
-    font-size: 12px;
-    font-weight: normal;
-}
-
 .hint {
     font-size: 11px;
     color: #999;
     font-weight: normal;
-}
-
-.link {
-    color: #4a8af4;
-    text-decoration: none;
-}
-
-.link:hover {
-    text-decoration: underline;
 }
 
 .button {

@@ -2,68 +2,11 @@ import turfCircle from '@turf/circle'
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
 
-export function addTextToMap(
-    map,
-    text,
-    angle = 0,
-    distance = 0.5,
-    options = {},
-) {
-    const id = `text-${Math.random().toString(36).substr(2, 9)}` // Generate a unique ID
-
-    // Calculate the position 1 nautical mile from the map center
-    const point = turf.point(coordinates.mapCenter)
-    const destination = turf.destination(point, distance, angle, {
-        units: 'nauticalmiles',
-    })
-    const textCoordinates = destination.geometry.coordinates
-
-    // Add a GeoJSON source with a single point feature
-    map.addSource(id, {
-        type: 'geojson',
-        data: {
-            type: 'FeatureCollection',
-            features: [
-                {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: textCoordinates,
-                    },
-                    properties: {
-                        text: text,
-                    },
-                },
-            ],
-        },
-    })
-
-    // Add a symbol layer to render the text
-    map.addLayer({
-        id: id,
-        type: 'symbol',
-        source: id,
-        layout: {
-            'text-field': ['get', 'text'],
-            'text-size': options.size || 25,
-            'text-anchor': options.anchor || 'center',
-            'text-offset': options.offset || [0, 0],
-            'text-rotate': options.rotate || 0,
-        },
-        paint: {
-            'text-color': options.color || '#000000',
-            'text-halo-color': options.haloColor || '#ffffff',
-            'text-halo-width': options.haloWidth || 1.8,
-        },
-    })
-
-    // Return the layer ID in case you need to modify or remove it later
-    return id
+export const createCircleData = (nauticalMiles) => {
+    return createCircle(nauticalMiles)
 }
 
-export const createLineFeature = (map, direction) => {
-    const id = 'line-' + direction
-
+export const createLineData = (direction) => {
     let sourceCoordinates = []
 
     if (direction === 'x') {
@@ -80,47 +23,26 @@ export const createLineFeature = (map, direction) => {
         ]
     }
 
-    map.addSource(id, {
-        type: 'geojson',
-        data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-                type: 'LineString',
-                coordinates: sourceCoordinates,
-            },
+    return {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+            type: 'LineString',
+            coordinates: sourceCoordinates,
         },
-    })
-
-    map.addLayer({
-        id: id,
-        type: 'line',
-        source: id,
-        layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-        },
-        paint: primaryLine,
-    })
+    }
 }
 
-export const createCircleFeature = (map, nauticalMiles, color) => {
-    const circle = createCircle(nauticalMiles)
-    const id = 'circle-' + nauticalMiles.toString()
+export const createJumprunData = (start, end, shift, angle) => {
+    return jrHelper(start, end, shift, angle)
+}
 
-    map.addSource(id, {
-        type: 'geojson',
-        data: circle,
+export const getTextPosition = (angle, distance) => {
+    const point = turf.point(coordinates.mapCenter)
+    const destination = turf.destination(point, distance, angle, {
+        units: 'nauticalmiles',
     })
-
-    // Add a new layer to visualize the polygon.
-    map.addLayer({
-        id: id,
-        type: 'line',
-        source: id,
-        layout: {},
-        paint: getPaint(color),
-    })
+    return destination.geometry.coordinates
 }
 
 const jrHelper = (start, end, shift, angle) => {
@@ -156,47 +78,6 @@ const jrHelper = (start, end, shift, angle) => {
     })
 }
 
-/**
- *
- * @param map
- * @param start
- * @param end
- * @param shift
- * @param angle
- */
-export const createJumprunFeature = (map, start, end, shift, angle) => {
-    const id = 'jumprun'
-
-    const jr = jrHelper(start, end, shift, angle)
-    map.addSource(id, {
-        type: 'geojson',
-        data: jr,
-    })
-
-    // Add a new layer to visualize the polygon.
-    map.addLayer({
-        id: id,
-        type: 'line',
-        source: id,
-        layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-        },
-        paint: {
-            'line-width': 6,
-            'line-color': '#00ff00',
-            'line-opacity': 1,
-        },
-    })
-
-    return jr
-}
-
-export const updateJumpRun = (map, start, end, shift, angle) => {
-    const jr = jrHelper(start, end, shift, angle)
-
-    map.getSource('jumprun').setData(jr)
-}
 
 const createCircle = (nauticalMiles = 0.1) => {
     const radius = nauticalMiles * 1852 // nautical miles in meters
@@ -306,24 +187,3 @@ export function calcShiftFromMidpoint(midCoords, angle) {
     return clamp(Math.round(dist * Math.sin(diffRad) * 100) / 100, -0.5, 0.5)
 }
 
-const getPaint = color => {
-    switch (color) {
-        case 'red':
-            return primaryLine
-        case 'black':
-        default:
-            return blackLine
-    }
-}
-
-const primaryLine = {
-    'line-width': 3,
-    'line-color': '#ff6d04',
-    'line-opacity': 0.7,
-}
-
-const blackLine = {
-    'line-width': 2,
-    'line-color': '#000000',
-    'line-opacity': 0.5,
-}

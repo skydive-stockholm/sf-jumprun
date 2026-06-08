@@ -6,6 +6,10 @@ import {
     getJumpRunEndpoints,
     calcJumpRunParams,
     calcShiftFromMidpoint,
+    createCircleData,
+    createLineData,
+    createJumprunData,
+    getTextPosition,
 } from '../../src/utils/geometry.js'
 import coordinates from '../../src/data/coordinates.js'
 
@@ -126,5 +130,44 @@ describe('calcShiftFromMidpoint', () => {
         const endpoints = getJumpRunEndpoints(-0.2, 0.2, 0.2, 90)
         const shift = calcShiftFromMidpoint(endpoints.mid, 90)
         expect(shift).toBeCloseTo(0.2, 1)
+    })
+})
+
+describe('createCircleData', () => {
+    it('returns a GeoJSON polygon for a given radius', () => {
+        const geojson = createCircleData(0.5)
+        expect(geojson.type).toBe('Feature')
+        expect(geojson.geometry.type).toBe('Polygon')
+    })
+})
+
+describe('createLineData', () => {
+    it('returns GeoJSON LineString for x axis', () => {
+        const geojson = createLineData('x')
+        expect(geojson.geometry.type).toBe('LineString')
+        expect(geojson.geometry.coordinates).toHaveLength(2)
+    })
+
+    it('returns GeoJSON LineString for y axis', () => {
+        const geojson = createLineData('y')
+        expect(geojson.geometry.type).toBe('LineString')
+        expect(geojson.geometry.coordinates).toHaveLength(2)
+    })
+})
+
+describe('createJumprunData', () => {
+    it('returns a GeoJSON LineString with 5 coordinates', () => {
+        const geojson = createJumprunData(-0.2, 0.2, 0, 30)
+        expect(geojson.geometry.type).toBe('LineString')
+        expect(geojson.geometry.coordinates).toHaveLength(5)
+    })
+})
+
+describe('getTextPosition', () => {
+    it('returns [lng, lat] array', () => {
+        const pos = getTextPosition(0, 0.5)
+        expect(pos).toHaveLength(2)
+        expect(typeof pos[0]).toBe('number')
+        expect(typeof pos[1]).toBe('number')
     })
 })

@@ -29,7 +29,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-if="weatherAloft.current" :class="$style.container">
+    <div v-if="weatherAloft.hasData" :class="$style.container">
         <div style="font-size: 70%" :class="$style.item">
             <strong>Altitude</strong>
 

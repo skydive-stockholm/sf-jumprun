@@ -1,13 +1,12 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
-import 'mapbox-gl/dist/mapbox-gl.css'
-import mapboxgl from 'mapbox-gl'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import {
-    addTextToMap,
-    createCircleFeature,
-    createJumprunFeature,
-    createLineFeature,
-    updateJumpRun,
+    createCircleData,
+    createLineData,
+    createJumprunData,
+    getTextPosition,
 } from '../utils/geometry.js'
 import { setMapCenter } from '../data/coordinates.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
@@ -15,7 +14,6 @@ import { useServerEvents } from '../composables/useServerEvents.js'
 
 const isConnected = ref(false)
 const map = ref(null)
-const configError = ref(false)
 const data = reactive({
     staff: {
         manifestor: '',
@@ -30,15 +28,19 @@ const data = reactive({
     },
 })
 
-const settings = reactive({ mapboxApiKey: '', mapCenter: '' })
+const settings = reactive({ mapCenter: '' })
+const settingsData = reactive({ manifestPhone: '', separation: '' })
+
+let jumprunLayer = null
 
 async function loadSettings() {
     try {
         const res = await fetch('http://localhost:3008/api/storage')
         const stored = await res.json()
         if (stored.settings) {
-            settings.mapboxApiKey = stored.settings.mapboxApiKey || ''
             settings.mapCenter = stored.settings.mapCenter || ''
+            settingsData.manifestPhone = stored.settings.manifestPhone || ''
+            settingsData.separation = stored.settings.separation || ''
         }
     } catch {
         // Backend not available yet
@@ -51,43 +53,64 @@ function getMapCenter() {
 }
 
 function initMap() {
-    if (!settings.mapboxApiKey) {
-        configError.value = true
-        return null
-    }
-
     const center = getMapCenter()
     setMapCenter(center)
-    mapboxgl.accessToken = settings.mapboxApiKey
 
     let zoom = 13.5
     if (window.innerWidth < 768) {
         zoom = 12.5
     }
 
-    return new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/satellite-streets-v12?optimize=true',
-        center,
+    const m = L.map('map', {
+        center: [center[1], center[0]],
         zoom,
+        zoomControl: false,
     })
+
+    L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { attribution: 'Tiles &copy; Esri', maxZoom: 19 },
+    ).addTo(m)
+
+    return m
 }
 
 function initMapFeatures(m) {
     for (let i = 0.1; i <= 1.5; i = i + 0.1) {
-        let color = 'black'
-        if (i === 0.5 || i === 1 || i === 1.5) {
-            color = 'red'
-        }
-        createCircleFeature(m, i, color)
+        const isHighlight = Math.abs(i - 0.5) < 0.01 || Math.abs(i - 1.0) < 0.01 || Math.abs(i - 1.5) < 0.01
+        const style = isHighlight
+            ? { color: '#ff6d04', weight: 3, opacity: 0.7, fillOpacity: 0 }
+            : { color: '#000000', weight: 2, opacity: 0.5, fillOpacity: 0 }
+        L.geoJSON(createCircleData(i), { style }).addTo(m)
     }
 
-    ;['x', 'y'].forEach((axis) => createLineFeature(m, axis))
-    createJumprunFeature(m, -0.2, 0.2, 0, 30)
-    addTextToMap(m, '360°', 0)
-    addTextToMap(m, '90°', 90)
-    addTextToMap(m, '180°', 180)
-    addTextToMap(m, '270°', 270)
+    ;['x', 'y'].forEach((axis) => {
+        L.geoJSON(createLineData(axis), {
+            style: { color: '#ff6d04', weight: 3, opacity: 0.7 },
+        }).addTo(m)
+    })
+
+    jumprunLayer = L.geoJSON(createJumprunData(-0.2, 0.2, 0, 30), {
+        style: { color: '#00ff00', weight: 6, opacity: 1 },
+    }).addTo(m)
+
+    const labels = [
+        { text: '360\u00B0', angle: 0 },
+        { text: '90\u00B0', angle: 90 },
+        { text: '180\u00B0', angle: 180 },
+        { text: '270\u00B0', angle: 270 },
+    ]
+
+    labels.forEach(({ text, angle }) => {
+        const pos = getTextPosition(angle, 0.5)
+        L.marker([pos[1], pos[0]], {
+            icon: L.divIcon({
+                className: '',
+                html: `<div style="font-size:25px;font-weight:bold;color:#000;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff;white-space:nowrap">${text}</div>`,
+                iconAnchor: [20, 15],
+            }),
+        }).addTo(m)
+    })
 }
 
 let serverEventsClose
@@ -95,36 +118,36 @@ let serverEventsClose
 onMounted(async () => {
     await loadSettings()
     map.value = initMap()
-    if (!map.value) return
 
-    map.value.on('load', () => {
-        initMapFeatures(map.value)
+    initMapFeatures(map.value)
 
-        const { close } = useServerEvents((res) => {
-            if (!res.jumprun) return
+    const { close } = useServerEvents((res) => {
+        if (!res.jumprun) return
 
-            if (res.staff) {
-                data.staff = res.staff
-            }
+        if (res.staff) {
+            data.staff = res.staff
+        }
 
-            if (
-                JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)
-            ) {
-                return
-            }
+        if (JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)) {
+            return
+        }
 
-            Object.assign(data.jumprun, res.jumprun)
+        Object.assign(data.jumprun, res.jumprun)
 
-            updateJumpRun(
-                map.value,
+        if (jumprunLayer) {
+            jumprunLayer.remove()
+        }
+        jumprunLayer = L.geoJSON(
+            createJumprunData(
                 data.jumprun.start,
                 data.jumprun.end,
                 data.jumprun.shift,
                 data.jumprun.angle,
-            )
-        }, isConnected)
-        serverEventsClose = close
-    })
+            ),
+            { style: { color: '#00ff00', weight: 6, opacity: 1 } },
+        ).addTo(map.value)
+    }, isConnected)
+    serverEventsClose = close
 })
 
 onUnmounted(() => {
@@ -134,10 +157,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-if="configError" :class="$style.errorScreen">
-        Mapbox API key not configured. Ask an admin to set it up.
-    </div>
-    <div v-else :class="$style.map">
+    <div :class="$style.map">
         <img
             src="../assets/north-arrow.svg"
             alt="Compass"
@@ -150,6 +170,8 @@ onUnmounted(() => {
             <JumpRunInfoBox
                 :staff="data.staff || null"
                 :jumprun="data.jumprun || null"
+                :manifest-phone="settingsData.manifestPhone"
+                :separation="settingsData.separation"
             />
         </div>
 
@@ -165,18 +187,6 @@ onUnmounted(() => {
 </template>
 
 <style module>
-.errorScreen {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #1a1a2e;
-    color: #999;
-    font-family: monospace;
-    font-size: 16px;
-}
-
 .map {
     width: 100vw;
     height: 100vh;
@@ -185,6 +195,8 @@ onUnmounted(() => {
 .mapBox {
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 0;
 }
 
 .compass {

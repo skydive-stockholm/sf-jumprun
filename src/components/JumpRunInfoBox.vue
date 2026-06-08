@@ -11,6 +11,14 @@ defineProps({
         required: false,
         default: null,
     },
+    manifestPhone: {
+        type: String,
+        default: '',
+    },
+    separation: {
+        type: String,
+        default: '',
+    },
 })
 </script>
 
@@ -18,10 +26,8 @@ defineProps({
     <section :class="$style.infoBox">
         <slot />
 
-        <!-- Weather data -->
         <JumpRunWeather />
 
-        <!-- Jump run data -->
         <div v-if="jumprun" :class="$style.jumpRunData">
             <div>
                 <span :class="[$style.indicator, $style.indicatorGreen]"></span>
@@ -41,20 +47,17 @@ defineProps({
         <div v-if="jumprun">
             <strong>Jump run heading:</strong>
             <span>&nbsp;</span>
-            <span>{{ jumprun.angle }}°</span>
+            <span>{{ jumprun.angle }}&deg;</span>
         </div>
 
-        <div>
+        <div v-if="separation">
             <strong>Separation</strong>
 
             <div :class="$style.separation">
-                <div>Small groups: 8s</div>
-
-                <div>Large groups: 12s</div>
+                {{ separation }}
             </div>
         </div>
 
-        <!-- Staff -->
         <div :class="$style.staffContainer">
             <div :class="$style.staffRow">
                 <strong>Jump leader:</strong>
@@ -74,10 +77,10 @@ defineProps({
                 <span v-if="staff?.pilot">{{ staff.pilot }}</span>
             </div>
 
-            <div>
+            <div v-if="manifestPhone">
                 <strong>Manifest:</strong>
                 <span>&nbsp;</span>
-                <span>+4676 135 43 85</span>
+                <span>{{ manifestPhone }}</span>
             </div>
 
             <div :class="$style.staffRow">
@@ -89,7 +92,7 @@ defineProps({
 
 <style module>
 .infoBox {
-    z-index: 10;
+    z-index: 1000;
     color: #ececec;
     background: #1b1b1b;
     padding: 20px 15px;
@@ -111,6 +114,7 @@ defineProps({
 
 @media (max-width: 767px) {
     .infoBox {
+        position: relative;
         font-size: 14px;
         width: 100%;
         gap: 12px;
@@ -150,7 +154,6 @@ defineProps({
 }
 
 .separation {
-    display: flex;
-    justify-content: space-between;
+    margin-top: 4px;
 }
 </style>

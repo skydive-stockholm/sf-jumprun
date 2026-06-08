@@ -22,7 +22,10 @@ export function startBackend(options = {}) {
 
     privateApp.use(express.json())
     publicApp.use(express.json())
-    publicApp.use(express.static(distPath))
+    const hasDistBuild = fs.existsSync(path.join(distPath, 'index.html'))
+    if (hasDistBuild) {
+        publicApp.use(express.static(distPath))
+    }
 
     publicApp.use((req, res, next) => {
         res.header('Access-Control-Allow-Origin', '*')
@@ -61,7 +64,11 @@ export function startBackend(options = {}) {
     })
 
     publicApp.get('*', (req, res) => {
-        res.sendFile(path.join(path.resolve(distPath), 'index.html'))
+        if (hasDistBuild) {
+            res.sendFile(path.join(path.resolve(distPath), 'index.html'))
+        } else {
+            res.redirect(`http://localhost:3000${req.originalUrl}`)
+        }
     })
 
     if (!fs.existsSync(dataPath)) {

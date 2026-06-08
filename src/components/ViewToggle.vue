@@ -1,17 +1,12 @@
 <script setup>
-import { useRouter, useRoute } from 'vue-router'
-
-const router = useRouter()
-const route = useRoute()
-
-function toggle() {
-    router.push(route.path === '/admin' ? '/' : '/admin')
+function openPublicView() {
+    window.open('http://localhost:3008', '_blank')
 }
 </script>
 
 <template>
-    <button :class="$style.toggle" @click="toggle">
-        {{ route.path === '/admin' ? 'Public View' : 'Admin View' }}
+    <button :class="$style.toggle" @click="openPublicView">
+        Open Public View
     </button>
 </template>
 

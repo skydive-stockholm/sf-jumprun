@@ -1,29 +1,23 @@
-import mapboxgl from 'mapbox-gl'
+import L from 'leaflet'
 import {
     calcJumpRunParams,
     calcShiftFromMidpoint,
     getJumpRunEndpoints,
-    updateJumpRun,
 } from '../utils/geometry.js'
 
 function createDragHandle(color) {
-    const el = document.createElement('div')
-    Object.assign(el.style, {
-        width: '20px',
-        height: '20px',
-        borderRadius: '50%',
-        backgroundColor: color,
-        border: '3px solid white',
-        cursor: 'grab',
-        boxShadow: '0 0 6px rgba(0,0,0,0.5)',
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:20px;height:20px;border-radius:50%;background-color:${color};border:3px solid white;cursor:grab;box-shadow:0 0 6px rgba(0,0,0,0.5)"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
     })
-    return el
 }
 
 export function useDragHandles(
     mapInstance,
     jumprunData,
-    { hasUnsavedChanges, isDragging },
+    { hasUnsavedChanges, isDragging, onJumprunUpdate },
 ) {
     let startMarker, endMarker, midMarker
 
@@ -35,9 +29,9 @@ export function useDragHandles(
             jumprunData.shift,
             jumprunData.angle,
         )
-        startMarker.setLngLat(ep.start)
-        endMarker.setLngLat(ep.end)
-        midMarker.setLngLat(ep.mid)
+        startMarker.setLatLng([ep.start[1], ep.start[0]])
+        endMarker.setLatLng([ep.end[1], ep.end[0]])
+        midMarker.setLatLng([ep.mid[1], ep.mid[0]])
     }
 
     function init() {
@@ -48,26 +42,20 @@ export function useDragHandles(
             jumprunData.angle,
         )
 
-        startMarker = new mapboxgl.Marker({
-            element: createDragHandle('#00ff00'),
+        startMarker = L.marker([endpoints.start[1], endpoints.start[0]], {
+            icon: createDragHandle('#00ff00'),
             draggable: true,
-        })
-            .setLngLat(endpoints.start)
-            .addTo(mapInstance)
+        }).addTo(mapInstance)
 
-        endMarker = new mapboxgl.Marker({
-            element: createDragHandle('#ff0000'),
+        endMarker = L.marker([endpoints.end[1], endpoints.end[0]], {
+            icon: createDragHandle('#ff0000'),
             draggable: true,
-        })
-            .setLngLat(endpoints.end)
-            .addTo(mapInstance)
+        }).addTo(mapInstance)
 
-        midMarker = new mapboxgl.Marker({
-            element: createDragHandle('#ffffff'),
+        midMarker = L.marker([endpoints.mid[1], endpoints.mid[0]], {
+            icon: createDragHandle('#ffffff'),
             draggable: true,
-        })
-            .setLngLat(endpoints.mid)
-            .addTo(mapInstance)
+        }).addTo(mapInstance)
 
         const onDragStart = () => {
             isDragging.value = true
@@ -84,66 +72,51 @@ export function useDragHandles(
         })
 
         startMarker.on('drag', () => {
-            const sl = startMarker.getLngLat()
-            const el = endMarker.getLngLat()
+            const sl = startMarker.getLatLng()
+            const el = endMarker.getLatLng()
             const params = calcJumpRunParams(
                 [sl.lng, sl.lat],
                 [el.lng, el.lat],
                 jumprunData.angle,
             )
             Object.assign(jumprunData, params)
-            updateJumpRun(
-                mapInstance,
+            onJumprunUpdate(params.start, params.end, params.shift, params.angle)
+            const ep = getJumpRunEndpoints(
                 params.start,
                 params.end,
                 params.shift,
                 params.angle,
             )
-            midMarker.setLngLat(
-                getJumpRunEndpoints(
-                    params.start,
-                    params.end,
-                    params.shift,
-                    params.angle,
-                ).mid,
-            )
+            midMarker.setLatLng([ep.mid[1], ep.mid[0]])
         })
 
         endMarker.on('drag', () => {
-            const sl = startMarker.getLngLat()
-            const el = endMarker.getLngLat()
+            const sl = startMarker.getLatLng()
+            const el = endMarker.getLatLng()
             const params = calcJumpRunParams(
                 [sl.lng, sl.lat],
                 [el.lng, el.lat],
                 jumprunData.angle,
             )
             Object.assign(jumprunData, params)
-            updateJumpRun(
-                mapInstance,
+            onJumprunUpdate(params.start, params.end, params.shift, params.angle)
+            const ep = getJumpRunEndpoints(
                 params.start,
                 params.end,
                 params.shift,
                 params.angle,
             )
-            midMarker.setLngLat(
-                getJumpRunEndpoints(
-                    params.start,
-                    params.end,
-                    params.shift,
-                    params.angle,
-                ).mid,
-            )
+            midMarker.setLatLng([ep.mid[1], ep.mid[0]])
         })
 
         midMarker.on('drag', () => {
-            const ml = midMarker.getLngLat()
+            const ml = midMarker.getLatLng()
             const shift = calcShiftFromMidpoint(
                 [ml.lng, ml.lat],
                 jumprunData.angle,
             )
             jumprunData.shift = shift
-            updateJumpRun(
-                mapInstance,
+            onJumprunUpdate(
                 jumprunData.start,
                 jumprunData.end,
                 shift,
@@ -155,8 +128,8 @@ export function useDragHandles(
                 shift,
                 jumprunData.angle,
             )
-            startMarker.setLngLat(ep.start)
-            endMarker.setLngLat(ep.end)
+            startMarker.setLatLng([ep.start[1], ep.start[0]])
+            endMarker.setLatLng([ep.end[1], ep.end[0]])
         })
     }
 
