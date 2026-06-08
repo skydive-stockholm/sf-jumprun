@@ -9,6 +9,7 @@ import {
     getTextPosition,
 } from '../utils/geometry.js'
 import { setMapCenter } from '../data/coordinates.js'
+import { addBaseLayer } from '../utils/baseLayer.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
 import { useDragHandles } from '../composables/useDragHandles.js'
@@ -81,10 +82,7 @@ function initMap() {
         zoomControl: false,
     })
 
-    L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { attribution: 'Tiles &copy; Esri', maxZoom: 19 },
-    ).addTo(m)
+    addBaseLayer(m)
 
     return m
 }
