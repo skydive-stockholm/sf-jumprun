@@ -9,8 +9,7 @@ npm install
 npm run build
 
 cd backend
-
 npm install
-npm run backend
-
 cd ..
+
+npm run backend
