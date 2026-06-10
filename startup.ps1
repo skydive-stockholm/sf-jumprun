@@ -8,9 +8,9 @@ git reset origin/main --hard
 npm install
 npm run build
 
-cd backend || exit
+cd backend
 
 npm install
-node standalone.js
+npm run backend
 
 cd ..
