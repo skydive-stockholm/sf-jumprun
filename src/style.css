@@ -48,6 +48,13 @@ svg {
     display: block;
     max-width: 100%;
 }
+/* Leaflet renders its tiles/overlays into zero-width panes; the reset above
+   would collapse those canvas/svg/img elements to 0 width. */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg {
+    max-width: none;
+}
 /*
   6. Remove built-in form typography styles
 */
