@@ -178,11 +178,16 @@ function startMap() {
     dragHandles.init()
 
     const { close } = useServerEvents((res) => {
-        if (!res.jumprun) return
-
         if (res.staff) {
             data.staff = res.staff
         }
+
+        if (res.settings) {
+            settingsData.manifestPhone = res.settings.manifestPhone || ''
+            settingsData.separation = res.settings.separation || ''
+        }
+
+        if (!res.jumprun) return
 
         if (isDragging.value || hasUnsavedChanges.value) return
 

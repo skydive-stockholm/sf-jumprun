@@ -121,11 +121,16 @@ onMounted(async () => {
     initMapFeatures(map.value)
 
     const { close } = useServerEvents((res) => {
-        if (!res.jumprun) return
-
         if (res.staff) {
             data.staff = res.staff
         }
+
+        if (res.settings) {
+            settingsData.manifestPhone = res.settings.manifestPhone || ''
+            settingsData.separation = res.settings.separation || ''
+        }
+
+        if (!res.jumprun) return
 
         if (JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)) {
             return

@@ -22,6 +22,8 @@ export function sanitizeStorage(body) {
         result.settings = {
             mapboxApiKey: String(body.settings.mapboxApiKey || ''),
             mapCenter: String(body.settings.mapCenter || ''),
+            manifestPhone: String(body.settings.manifestPhone || ''),
+            separation: String(body.settings.separation || ''),
         }
     }
 

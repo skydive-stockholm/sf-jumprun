@@ -279,6 +279,7 @@ async function save() {
     border: 1px solid #d1d5db;
     border-radius: 8px;
     font-size: 14px;
+    color: #111;
     transition: border-color 0.15s, box-shadow 0.15s;
     outline: none;
     background: #fafafa;
