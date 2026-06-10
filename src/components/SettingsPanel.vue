@@ -21,7 +21,7 @@ onMounted(async () => {
     pilot.value = props.staff.pilot || ''
 
     try {
-        const res = await fetch('http://localhost:3008/api/storage')
+        const res = await fetch('/api/storage')
         const data = await res.json()
         if (data.settings) {
             mapCenter.value = data.settings.mapCenter || ''
@@ -46,12 +46,12 @@ async function save() {
     }
 
     await Promise.all([
-        fetch('http://localhost:3009/api/storage', {
+        fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ staff: staffData }),
         }),
-        fetch('http://localhost:3009/api/storage', {
+        fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ settings: settingsPayload }),

@@ -6,9 +6,7 @@ export function useServerEvents(onUpdate, isConnected = ref(false)) {
     let pollingInterval
 
     function connect() {
-        evtSource = new EventSource(
-            `http://localhost:3008/subscribe`,
-        )
+        evtSource = new EventSource(`/subscribe`)
 
         evtSource.onopen = () => {
             isConnected.value = true
@@ -25,9 +23,7 @@ export function useServerEvents(onUpdate, isConnected = ref(false)) {
             if (!pollingInterval) {
                 pollingInterval = setInterval(async () => {
                     try {
-                        const res = await fetch(
-                            `http://localhost:3008/api/storage`,
-                        )
+                        const res = await fetch(`/api/storage`)
                         onUpdate(await res.json())
                     } catch {
                         // Server still unavailable

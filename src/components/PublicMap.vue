@@ -36,7 +36,7 @@ let jumprunLayer = null
 
 async function loadSettings() {
     try {
-        const res = await fetch('http://localhost:3008/api/storage')
+        const res = await fetch('/api/storage')
         const stored = await res.json()
         if (stored.settings) {
             settings.mapCenter = stored.settings.mapCenter || ''
@@ -66,6 +66,7 @@ function initMap() {
         center: [center[1], center[0]],
         zoom,
         zoomControl: false,
+        preferCanvas: true,
     })
 
     addBaseLayer(m)

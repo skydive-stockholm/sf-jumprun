@@ -6,7 +6,7 @@ const emit = defineEmits(['complete'])
 const mapCenter = ref('17.42929, 60.28519')
 
 async function save() {
-    await fetch('http://localhost:3009/api/storage', {
+    await fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
