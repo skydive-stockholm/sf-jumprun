@@ -106,23 +106,31 @@ export function startBackend(options = {}) {
         }, 100)
     })
 
+    function attachRetry(server, port, label) {
+        server.on('error', (err) => {
+            console.error(
+                `${label} server error (${err.code || err.message}), retrying in 3s`,
+            )
+            setTimeout(() => {
+                try {
+                    server.close()
+                } catch {
+                    // ignore — server may never have opened
+                }
+                server.listen(port)
+            }, 3000)
+        })
+    }
+
     const publicServer = publicApp.listen(publicPort, () => {
         console.log(`Jump run public app listening on port ${publicPort}`)
     })
-    publicServer.on('error', (err) => {
-        if (err.code === 'EADDRINUSE')
-            console.error(`Port ${publicPort} already in use`)
-        else throw err
-    })
+    attachRetry(publicServer, publicPort, 'public')
 
     const privateServer = privateApp.listen(privatePort, () => {
         console.log(`Jump run private app listening on port ${privatePort}`)
     })
-    privateServer.on('error', (err) => {
-        if (err.code === 'EADDRINUSE')
-            console.error(`Port ${privatePort} already in use`)
-        else throw err
-    })
+    attachRetry(privateServer, privatePort, 'private')
 
     return { publicServer, privateServer }
 }

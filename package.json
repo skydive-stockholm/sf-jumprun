@@ -3,6 +3,10 @@
     "version": "1.0.0",
     "description": "Jump run visualization for Skydive Stockholm",
     "author": "Skydive Stockholm",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/skydive-stockholm/sf-jumprun.git"
+    },
     "main": "electron/main.cjs",
     "type": "module",
     "scripts": {
@@ -12,12 +16,14 @@
         "format": "prettier .  --write",
         "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
         "backend": "nodemon backend/standalone.js --ignore 'data.json'",
+        "backend:prod": "node backend/standalone.js",
         "test": "vitest run",
         "test:watch": "vitest",
         "electron:dev": "concurrently \"npm run dev\" \"wait-on tcp:3000 && electron .\"",
         "electron:build": "npm run build && electron-builder",
-        "electron:build:win": "npm run build && electron-builder --win",
-        "electron:build:mac": "npm run build && electron-builder --mac"
+        "electron:build:win": "npm run build && electron-builder --win --x64",
+        "electron:build:mac": "npm run build && electron-builder --mac",
+        "electron:publish:win": "npm run build && electron-builder --win --x64 --publish always"
     },
     "husky": {
         "hooks": {

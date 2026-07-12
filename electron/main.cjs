@@ -7,6 +7,14 @@ const isDev = !app.isPackaged
 let mainWindow
 let tray
 
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception (app stays up):', err)
+})
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled rejection (app stays up):', err)
+})
+
 async function startBackendServer() {
     const distPath = path.join(__dirname, '..', 'dist')
     const dataPath = path.join(app.getPath('userData'), 'data.json')
@@ -19,6 +27,15 @@ async function startBackendServer() {
     startBackend({ dataPath, distPath })
 }
 
+function loadApp() {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    const base = isDev ? 'http://localhost:3000' : 'http://localhost:3008'
+    mainWindow.loadURL(`${base}/admin`).catch(() => {
+        // Backend not up yet (e.g. just booted) — keep retrying.
+        setTimeout(loadApp, 2000)
+    })
+}
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -28,8 +45,23 @@ function createWindow() {
         },
     })
 
-    const base = isDev ? 'http://localhost:3000' : 'http://localhost:3008'
-    mainWindow.loadURL(`${base}/admin`)
+    // Retry when the page fails to load (backend still starting, transient
+    // network error, etc.).
+    mainWindow.webContents.on(
+        'did-fail-load',
+        (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+            if (isMainFrame) setTimeout(loadApp, 2000)
+        },
+    )
+
+    // Recover from renderer crashes and hangs.
+    mainWindow.webContents.on('render-process-gone', () => {
+        setTimeout(loadApp, 1000)
+    })
+
+    mainWindow.on('unresponsive', () => {
+        loadApp()
+    })
 
     mainWindow.on('close', (event) => {
         if (process.platform === 'win32') {
@@ -37,6 +69,8 @@ function createWindow() {
             mainWindow.hide()
         }
     })
+
+    loadApp()
 }
 
 function createTray() {
@@ -71,6 +105,12 @@ app.whenReady().then(async () => {
     createTray()
 
     if (!isDev) {
+        // Relaunch automatically after a reboot / power restore.
+        app.setLoginItemSettings({
+            openAtLogin: true,
+            path: process.execPath,
+        })
+
         autoUpdater.checkForUpdatesAndNotify()
 
         autoUpdater.on('update-available', () => {
