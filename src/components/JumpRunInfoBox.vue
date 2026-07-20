@@ -1,7 +1,8 @@
 <script setup>
+import { computed } from 'vue'
 import JumpRunWeather from './JumpRunWeather.vue'
 
-defineProps({
+const props = defineProps({
     staff: {
         type: Object,
         required: true,
@@ -19,6 +20,35 @@ defineProps({
         type: String,
         default: '',
     },
+    calculatedSeparation: {
+        type: Object,
+        default: null,
+    },
+    canopyCircle: {
+        type: Object,
+        default: null,
+    },
+    driftBox: {
+        type: Object,
+        default: null,
+    },
+})
+
+const DEFAULT_SEPARATION = 'Small groups: 8s · Large groups: 12s'
+
+// Time from first to last exit point at the current groundspeed.
+const runTime = computed(() => {
+    const j = props.jumprun
+    const s = props.calculatedSeparation
+    if (!j || !s || !(s.planeGroundSpeed > 0)) return null
+
+    const lengthM = (Number(j.end) - Number(j.start)) * 1852
+    if (!Number.isFinite(lengthM) || lengthM <= 0) return null
+
+    return {
+        seconds: Math.round(lengthM / s.planeGroundSpeed),
+        groundSpeedKt: Math.round(s.planeGroundSpeed / 0.514444),
+    }
 })
 </script>
 
@@ -44,17 +74,57 @@ defineProps({
             </div>
         </div>
 
+        <div v-if="jumprun" :class="$style.greenLightNote">
+            The green light turns on 10 seconds before first exit — the
+            yellow start of the jump run line.
+        </div>
+
         <div v-if="jumprun">
             <strong>Jump run heading:</strong>
             <span>&nbsp;</span>
             <span>{{ jumprun.angle }}&deg;</span>
         </div>
 
-        <div v-if="separation">
+        <div v-if="runTime">
+            <strong>Time on run:</strong>
+            <span>&nbsp;</span>
+            <span>
+                {{ runTime.seconds }} s ({{ runTime.groundSpeedKt }} kt
+                groundspeed)
+            </span>
+        </div>
+
+        <div>
             <strong>Separation</strong>
 
             <div :class="$style.separation">
-                {{ separation }}
+                {{ separation || DEFAULT_SEPARATION }}
+            </div>
+        </div>
+
+        <div v-if="driftBox" :class="$style.canopyLegend">
+            <span :class="$style.driftLegendIcon"></span>
+            <div>
+                <strong>Drift box</strong>
+                ({{ driftBox.distance }} nm drift)
+                <div :class="$style.canopyLegendText">
+                    Where jumpers are expected to open their parachutes: the
+                    jump run from the first exit point, moved by the freefall
+                    wind drift and the forward throw from the aircraft.
+                </div>
+            </div>
+        </div>
+
+        <div v-if="canopyCircle" :class="$style.canopyLegend">
+            <span :class="$style.canopyLegendIcon"></span>
+            <div>
+                <strong>Canopy return area</strong>
+                ({{ canopyCircle.radius }} nm radius)
+                <div :class="$style.canopyLegendText">
+                    Jumpers who open inside the dashed circle can still fly
+                    back to the landing area. It sits upwind and moves with
+                    the wind.
+                </div>
             </div>
         </div>
 
@@ -95,7 +165,7 @@ defineProps({
     z-index: 1000;
     color: #ececec;
     background: #1b1b1b;
-    padding: 20px 15px;
+    padding: 20px 10px;
     bottom: 0;
     border-top-right-radius: 6px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
@@ -106,9 +176,11 @@ defineProps({
 
 @media (min-width: 768px) {
     .infoBox {
-        position: fixed;
         width: 442px;
+        height: 100%;
+        overflow-y: auto;
         gap: 20px;
+        border-top-right-radius: 0;
     }
 }
 
@@ -141,6 +213,11 @@ defineProps({
     justify-content: space-between;
 }
 
+.greenLightNote {
+    font-size: 0.8em;
+    color: #b5b5b5;
+}
+
 .staffContainer {
     display: flex;
     flex-direction: column;
@@ -155,5 +232,36 @@ defineProps({
 
 .separation {
     margin-top: 4px;
+}
+
+.canopyLegend {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.canopyLegendIcon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 4px;
+    border: 2px dashed #38bdf8;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.driftLegendIcon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 4px;
+    border: 2px dashed #facc15;
+    background: rgba(250, 204, 21, 0.12);
+}
+
+.canopyLegendText {
+    margin-top: 4px;
+    font-size: 0.8em;
+    color: #b5b5b5;
 }
 </style>

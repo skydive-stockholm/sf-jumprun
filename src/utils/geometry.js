@@ -2,11 +2,11 @@ import turfCircle from '@turf/circle'
 import coordinates from '../data/coordinates.js'
 import * as turf from '@turf/turf'
 
-export const createCircleData = (nauticalMiles) => {
+export const createCircleData = nauticalMiles => {
     return createCircle(nauticalMiles)
 }
 
-export const createLineData = (direction) => {
+export const createLineData = direction => {
     let sourceCoordinates = []
 
     if (direction === 'x') {
@@ -78,12 +78,73 @@ const jrHelper = (start, end, shift, angle) => {
     })
 }
 
-
 const createCircle = (nauticalMiles = 0.1) => {
     const radius = nauticalMiles * 1852 // nautical miles in meters
     const options = { steps: 0, units: 'meters' }
 
     return turfCircle(coordinates.mapCenter, radius, options)
+}
+
+// Circle displaced from the map center, e.g. the canopy return area
+// offset upwind of the target.
+export const createOffsetCircleData = (radiusNM, offsetNM, bearing) => {
+    const center = turf.destination(
+        turf.point(coordinates.mapCenter),
+        offsetNM,
+        bearing,
+        { units: 'nauticalmiles' },
+    )
+    return turfCircle(center.geometry.coordinates, radiusNM * 1852, {
+        steps: 64,
+        units: 'meters',
+    })
+}
+
+// Box where jumpers open after freefall: the jump run from the first exit
+// point (the green-light lead is skipped) translated by the freefall drift
+// vector and padded on all sides by the expected scatter.
+export const createDriftBoxData = (start, end, shift, angle, drift) => {
+    const leadNM = clamp(drift.lead || 0, 0, end - start)
+    const { start: p1, end: p2 } = getJumpRunEndpoints(
+        start + leadNM,
+        end,
+        shift,
+        angle,
+    )
+    const padM = drift.spread * 1852
+    const translate = (pt, distance, bearing) =>
+        turf.transformTranslate(pt, distance, bearing, { units: 'meters' })
+
+    const move = coords =>
+        translate(turf.point(coords), drift.distance * 1852, drift.bearing)
+    const a = translate(move(p1), padM, angle + 180)
+    const b = translate(move(p2), padM, angle)
+    const corner = (pt, side) =>
+        translate(pt, padM, angle + side).geometry.coordinates
+
+    return turf.polygon([
+        [
+            corner(a, -90),
+            corner(b, -90),
+            corner(b, 90),
+            corner(a, 90),
+            corner(a, -90),
+        ],
+    ])
+}
+
+// Green-light lead: the first part of the run, flown before the first exit.
+export const createLeadLineData = (start, end, shift, angle, leadNM) => {
+    const lead = clamp(leadNM || 0, 0, end - start)
+    if (lead <= 0) return null
+
+    const { start: p1, end: p2 } = getJumpRunEndpoints(
+        start,
+        start + lead,
+        shift,
+        angle,
+    )
+    return turf.lineString([p1, p2])
 }
 
 export function normalizeAngle(angle) {
@@ -186,4 +247,3 @@ export function calcShiftFromMidpoint(midCoords, angle) {
 
     return clamp(Math.round(dist * Math.sin(diffRad) * 100) / 100, -0.5, 0.5)
 }
-

@@ -42,4 +42,36 @@ describe('sanitizeStorage', () => {
         expect(result.staff).toBeDefined()
         expect(result.jumprun).toBeDefined()
     })
+
+    it('sanitizes manual winds aloft to numbers per known altitude', () => {
+        const result = sanitizeStorage({
+            settings: {
+                manualWindsAloft: {
+                    600: { wind: '5', windDegrees: '90' },
+                    1500: { wind: 'abc', windDegrees: 180 },
+                    3000: { wind: 12, windDegrees: 270 },
+                    9999: { wind: 1, windDegrees: 1 },
+                },
+            },
+        })
+        expect(result.settings.manualWindsAloft).toEqual({
+            600: { wind: 5, windDegrees: 90 },
+            3000: { wind: 12, windDegrees: 270 },
+        })
+    })
+
+    it('stores null when manual winds are missing or invalid', () => {
+        expect(
+            sanitizeStorage({ settings: {} }).settings.manualWindsAloft,
+        ).toBeNull()
+        expect(
+            sanitizeStorage({ settings: { manualWindsAloft: 'x' } }).settings
+                .manualWindsAloft,
+        ).toBeNull()
+        expect(
+            sanitizeStorage({
+                settings: { manualWindsAloft: { 600: { wind: 'a' } } },
+            }).settings.manualWindsAloft,
+        ).toBeNull()
+    })
 })

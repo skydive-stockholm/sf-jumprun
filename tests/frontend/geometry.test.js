@@ -9,6 +9,8 @@ import {
     createCircleData,
     createLineData,
     createJumprunData,
+    createDriftBoxData,
+    createLeadLineData,
     getTextPosition,
 } from '../../src/utils/geometry.js'
 import coordinates from '../../src/data/coordinates.js'
@@ -160,6 +162,53 @@ describe('createJumprunData', () => {
         const geojson = createJumprunData(-0.2, 0.2, 0, 30)
         expect(geojson.geometry.type).toBe('LineString')
         expect(geojson.geometry.coordinates).toHaveLength(5)
+    })
+})
+
+describe('createDriftBoxData', () => {
+    it('skips the green-light lead at the start of the run', () => {
+        const drift = { distance: 0, bearing: 0, spread: 0.08 }
+        const full = createDriftBoxData(-0.5, 0.5, 0, 90, drift)
+        const withLead = createDriftBoxData(-0.5, 0.5, 0, 90, {
+            ...drift,
+            lead: 0.2,
+        })
+
+        const west = ring => Math.min(...ring.map(c => c[0]))
+        const east = ring => Math.max(...ring.map(c => c[0]))
+        const fullRing = full.geometry.coordinates[0]
+        const leadRing = withLead.geometry.coordinates[0]
+
+        expect(west(leadRing)).toBeGreaterThan(west(fullRing))
+        expect(east(leadRing)).toBeCloseTo(east(fullRing), 6)
+    })
+
+    it('never starts past the end of the run', () => {
+        const box = createDriftBoxData(-0.1, 0.1, 0, 90, {
+            distance: 0,
+            bearing: 0,
+            spread: 0.08,
+            lead: 1,
+        })
+        expect(box.geometry.type).toBe('Polygon')
+    })
+})
+
+describe('createLeadLineData', () => {
+    it('returns a segment from the run start along the heading', () => {
+        const line = createLeadLineData(-0.5, 0.5, 0, 90, 0.2)
+        const run = getJumpRunEndpoints(-0.5, 0.5, 0, 90)
+        const [p1, p2] = line.geometry.coordinates
+        expect(p1).toEqual(run.start)
+        expect(p2[0]).toBeGreaterThan(p1[0])
+        expect(p2[0]).toBeLessThan(run.end[0])
+    })
+
+    it('is clamped to the run and null when there is no lead', () => {
+        const clamped = createLeadLineData(-0.1, 0.1, 0, 90, 5)
+        const run = getJumpRunEndpoints(-0.1, 0.1, 0, 90)
+        expect(clamped.geometry.coordinates[1][0]).toBeCloseTo(run.end[0], 6)
+        expect(createLeadLineData(-0.5, 0.5, 0, 90, 0)).toBeNull()
     })
 })
 

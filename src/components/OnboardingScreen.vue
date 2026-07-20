@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['complete'])
 
-const mapCenter = ref('17.42929, 60.28519')
+const mapCenter = ref('17.426283, 60.284016')
 
 async function save() {
     await fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
@@ -11,7 +11,7 @@ async function save() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             settings: {
-                mapCenter: mapCenter.value.trim() || '17.42929, 60.28519',
+                mapCenter: mapCenter.value.trim() || '17.426283, 60.284016',
             },
         }),
     })
@@ -34,7 +34,7 @@ async function save() {
                     <input
                         v-model="mapCenter"
                         type="text"
-                        placeholder="17.42929, 60.28519"
+                        placeholder="17.426283, 60.284016"
                         :class="$style.input"
                     />
                     <span :class="$style.hint">

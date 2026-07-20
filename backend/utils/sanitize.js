@@ -1,3 +1,20 @@
+const WIND_ALTITUDES = ['600', '1500', '3000']
+
+function sanitizeManualWinds(manual) {
+    if (!manual || typeof manual !== 'object') return null
+
+    const result = {}
+    for (const altitude of WIND_ALTITUDES) {
+        const row = manual[altitude]
+        if (!row || typeof row !== 'object') continue
+        const wind = Number(row.wind)
+        const windDegrees = Number(row.windDegrees)
+        if (!Number.isFinite(wind) || !Number.isFinite(windDegrees)) continue
+        result[altitude] = { wind, windDegrees }
+    }
+    return Object.keys(result).length > 0 ? result : null
+}
+
 export function sanitizeStorage(body) {
     const result = {}
 
@@ -24,6 +41,12 @@ export function sanitizeStorage(body) {
             mapCenter: String(body.settings.mapCenter || ''),
             manifestPhone: String(body.settings.manifestPhone || ''),
             separation: String(body.settings.separation || ''),
+            exitAltitude: String(body.settings.exitAltitude || ''),
+            openingAltitude: String(body.settings.openingAltitude || ''),
+            aircraftSpeed: String(body.settings.aircraftSpeed || ''),
+            manualWindsAloft: sanitizeManualWinds(
+                body.settings.manualWindsAloft,
+            ),
         }
     }
 

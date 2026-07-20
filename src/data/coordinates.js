@@ -1,4 +1,4 @@
-const DEFAULT_CENTER = [17.42929, 60.28519]
+const DEFAULT_CENTER = [17.426283, 60.284016]
 
 let currentCenter = [...DEFAULT_CENTER]
 

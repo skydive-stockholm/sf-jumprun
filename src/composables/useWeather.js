@@ -1,48 +1,59 @@
-import { reactive, ref } from 'vue'
+import { reactive } from 'vue'
 
 import { windDirection, roundNumber } from '../utils/weather.js'
 
-export const useWeather = () => {
-    const weatherApiUrl = `https://insidan.skydive.se/api/lastweather`
+const weatherApiUrl = `https://insidan.skydive.se/api/lastweather`
 
-    const result = reactive({
+const store = reactive({
+    current: {
         windDirection: '',
         windDegrees: 0,
         wind: 0,
         windGust: 0,
         temperature: 0,
-    })
+    },
+    hasData: false,
+    update,
+})
 
-    const data = ref([])
+let inFlight = null
 
-    function setData(val) {
-        if (!val) {
-            return
-        }
-
-        data.value = val
-
-        result.windDirection = windDirection(val.windDegrees).name
-        result.windDegrees = val.windDegrees
-        result.wind = roundNumber(val.windAverage)
-        result.windGust = roundNumber(val.windGust)
-        result.temperature = roundNumber(val.temperature)
-
-        return result
-    }
-
-    function fetchWeather() {
-        fetch(weatherApiUrl)
+function update() {
+    if (!inFlight) {
+        inFlight = fetch(weatherApiUrl)
             .then((res) => res.json())
-            .then((data) => setData(data))
+            .then(setData)
             .catch(() => {})
+            .finally(() => {
+                inFlight = null
+            })
+    }
+    return inFlight
+}
+
+function setData(val) {
+    if (!val) {
+        return
     }
 
-    // Fetch the weather on created
-    fetchWeather()
+    store.current.windDirection = windDirection(val.windDegrees).name
+    store.current.windDegrees = val.windDegrees
+    store.current.wind = roundNumber(val.windAverage)
+    store.current.windGust = roundNumber(val.windGust)
+    store.current.temperature = roundNumber(val.temperature)
+    store.hasData = true
+}
 
-    return {
-        current: result,
-        update: fetchWeather,
+let started = false
+
+export const useWeather = () => {
+    if (!started) {
+        started = true
+        update()
+        setInterval(update, 60 * 1000)
+    } else if (!store.hasData) {
+        update()
     }
+
+    return store
 }

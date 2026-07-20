@@ -1,5 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import {
+    useWeatherAloft,
+    WIND_ALTITUDES,
+} from '../composables/useWeatherAloft.js'
 
 const props = defineProps({
     staff: { type: Object, required: true },
@@ -7,13 +11,51 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
+const weatherAloft = useWeatherAloft()
+
 const manifestor = ref('')
 const jumpLeader = ref('')
 const pilot = ref('')
 const mapCenter = ref('')
 const manifestPhone = ref('')
 const separation = ref('')
+const exitAltitude = ref('')
+const openingAltitude = ref('')
+const aircraftSpeed = ref('')
+const manualWinds = ref(false)
+const windRows = reactive(
+    Object.fromEntries(
+        WIND_ALTITUDES.map((alt) => [alt, { wind: '', windDegrees: '' }]),
+    ),
+)
 const saved = ref(false)
+
+function prefillWindRows(source) {
+    WIND_ALTITUDES.forEach((alt) => {
+        const row = source?.[alt]
+        const wind = Number(row?.wind)
+        const windDegrees = Number(row?.windDegrees)
+        windRows[alt].wind = Number.isFinite(wind)
+            ? String(Math.round(wind * 10) / 10)
+            : ''
+        windRows[alt].windDegrees = Number.isFinite(windDegrees)
+            ? String(Math.round(windDegrees))
+            : ''
+    })
+}
+
+function buildManualWinds() {
+    const result = {}
+    WIND_ALTITUDES.forEach((alt) => {
+        const wind = Number(windRows[alt].wind)
+        const windDegrees = Number(windRows[alt].windDegrees)
+        if (windRows[alt].wind === '' || windRows[alt].windDegrees === '')
+            return
+        if (!Number.isFinite(wind) || !Number.isFinite(windDegrees)) return
+        result[alt] = { wind, windDegrees }
+    })
+    return Object.keys(result).length > 0 ? result : null
+}
 
 onMounted(async () => {
     manifestor.value = props.staff.manifestor || ''
@@ -27,9 +69,19 @@ onMounted(async () => {
             mapCenter.value = data.settings.mapCenter || ''
             manifestPhone.value = data.settings.manifestPhone || ''
             separation.value = data.settings.separation || ''
+            exitAltitude.value = data.settings.exitAltitude || ''
+            openingAltitude.value = data.settings.openingAltitude || ''
+            aircraftSpeed.value = data.settings.aircraftSpeed || ''
+            manualWinds.value = Boolean(data.settings.manualWindsAloft)
         }
+        prefillWindRows(
+            manualWinds.value
+                ? data.settings.manualWindsAloft
+                : weatherAloft.current,
+        )
     } catch {
         // Backend not available yet
+        prefillWindRows(weatherAloft.current)
     }
 })
 
@@ -43,6 +95,10 @@ async function save() {
         mapCenter: mapCenter.value,
         manifestPhone: manifestPhone.value,
         separation: separation.value,
+        exitAltitude: exitAltitude.value,
+        openingAltitude: openingAltitude.value,
+        aircraftSpeed: aircraftSpeed.value,
+        manualWindsAloft: manualWinds.value ? buildManualWinds() : null,
     }
 
     await Promise.all([
@@ -145,9 +201,96 @@ async function save() {
                             :class="$style.input"
                         />
                         <span :class="$style.hint"
-                            >Leave empty to hide from info box</span
+                            >Leave empty to show the default: Small groups:
+                            8s · Large groups: 12s</span
                         >
                     </label>
+                </fieldset>
+
+                <fieldset :class="$style.section">
+                    <legend :class="$style.sectionTitle">
+                        Jump run suggestion
+                    </legend>
+
+                    <label :class="$style.field">
+                        <span :class="$style.label">Exit altitude</span>
+                        <input
+                            v-model="exitAltitude"
+                            type="number"
+                            placeholder="4000"
+                            :class="$style.input"
+                        />
+                        <span :class="$style.hint">meters</span>
+                    </label>
+
+                    <label :class="$style.field">
+                        <span :class="$style.label">Deployment altitude</span>
+                        <input
+                            v-model="openingAltitude"
+                            type="number"
+                            placeholder="1000"
+                            :class="$style.input"
+                        />
+                        <span :class="$style.hint">meters</span>
+                    </label>
+
+                    <label :class="$style.field">
+                        <span :class="$style.label">
+                            Aircraft speed on jump run
+                        </span>
+                        <input
+                            v-model="aircraftSpeed"
+                            type="number"
+                            placeholder="80"
+                            :class="$style.input"
+                        />
+                        <span :class="$style.hint">knots</span>
+                    </label>
+                </fieldset>
+
+                <fieldset :class="$style.section">
+                    <legend :class="$style.sectionTitle">Winds aloft</legend>
+
+                    <label :class="$style.checkboxField">
+                        <input v-model="manualWinds" type="checkbox" />
+                        <span :class="$style.label">
+                            Set winds aloft manually
+                        </span>
+                    </label>
+                    <span :class="$style.hint">
+                        While set manually, automatic updates from the winds
+                        aloft forecast are paused. Uncheck to resume the
+                        forecast.
+                    </span>
+
+                    <template v-if="manualWinds">
+                        <div :class="$style.windRow">
+                            <span :class="$style.hint">Altitude</span>
+                            <span :class="$style.hint">Wind (m/s)</span>
+                            <span :class="$style.hint">Direction (°)</span>
+                        </div>
+                        <div
+                            v-for="alt in WIND_ALTITUDES"
+                            :key="alt"
+                            :class="$style.windRow"
+                        >
+                            <span :class="$style.label">{{ alt }} m</span>
+                            <input
+                                v-model="windRows[alt].wind"
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                :class="$style.input"
+                            />
+                            <input
+                                v-model="windRows[alt].windDegrees"
+                                type="number"
+                                min="0"
+                                max="360"
+                                :class="$style.input"
+                            />
+                        </div>
+                    </template>
                 </fieldset>
 
                 <fieldset :class="$style.section">
@@ -158,7 +301,7 @@ async function save() {
                         <input
                             v-model="mapCenter"
                             type="text"
-                            placeholder="17.42929, 60.28519"
+                            placeholder="17.426283, 60.284016"
                             :class="$style.input"
                         />
                         <span :class="$style.hint">lng, lat</span>
@@ -294,6 +437,21 @@ async function save() {
 .hint {
     font-size: 11px;
     color: #999;
+}
+
+.checkboxField {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.windRow {
+    display: grid;
+    grid-template-columns: 70px 1fr 1fr;
+    gap: 10px;
+    align-items: center;
 }
 
 .actions {
