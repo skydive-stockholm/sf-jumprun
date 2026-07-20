@@ -16,6 +16,7 @@ import { setMapCenter } from '../data/coordinates.js'
 import { addBaseLayer } from '../utils/baseLayer.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
+import { useConnectionWatchdog } from '../composables/useConnectionWatchdog.js'
 import {
     useWeatherAloft,
     applyManualWindsSetting,
@@ -64,6 +65,8 @@ function assignSettingsData(source) {
 
 const weatherAloft = useWeatherAloft()
 const groundWeather = useWeather()
+
+useConnectionWatchdog()
 
 const separationConfig = computed(() => {
     const config = { ...SUGGESTION_DEFAULTS }
