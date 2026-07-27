@@ -75,8 +75,8 @@ const runTime = computed(() => {
         </div>
 
         <div v-if="jumprun" :class="$style.greenLightNote">
-            The green light turns on 10 seconds before first exit — the
-            yellow start of the jump run line.
+            When the green light turns on, you have 5 seconds to jump
+            (marked by the yellow line)
         </div>
 
         <div v-if="jumprun">
