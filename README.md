@@ -35,27 +35,33 @@ on its own, without the root `node_modules`.
 
 ### Run it
 
-The backend serves the built frontend, so build first:
+The frontend always needs the backend for data. In two terminals:
 
 ```bash
-npm run build     # frontend -> dist/
-npm run backend   # backend on :3008 (public) and :3009 (private)
+npm run backend   # terminal 1 — :3008 (public) and :3009 (private)
+npm run dev       # terminal 2 — :3000 with hot reload
 ```
 
 Then open:
 
-- <http://localhost:3008> — public view
-- <http://localhost:3008/admin> — jump leader view
+- <http://localhost:3000> — public view
+- <http://localhost:3000/admin> — jump leader view
+
+The dev server proxies `/api/storage` and the `/subscribe` SSE stream through
+to the backend, so live data works exactly as it does in production. Start the
+backend first; the dev server has nothing to proxy to without it.
+
+To run it the way the drop-zone machine does, build the frontend and let the
+backend serve it — no Vite involved, everything on one port:
+
+```bash
+npm run build
+npm run backend
+# http://localhost:3008 and http://localhost:3008/admin
+```
 
 On first boot the backend creates `backend/data.json` (gitignored) with empty
 staff fields. That file is the entire state of the app.
-
-> **Note on `npm run dev`:** the Vite dev server on :3000 gives you hot reload
-> for UI work, but it does **not** proxy `/api/storage` or `/subscribe` to the
-> backend — those paths return the SPA's `index.html`, so the map gets no live
-> data there. Anything involving real jump run, staff, or settings data needs
-> the built frontend on :3008. The same applies to `npm run electron:dev`,
-> which points the Electron window at :3000.
 
 ### First run: setting a jump run
 
@@ -92,10 +98,10 @@ before showing the map.
 
 ### Ports
 
-| Port   | What                                                         |
-| ------ | ------------------------------------------------------------ |
-| `3000` | Vite dev server (UI only — see the note above)               |
-| `3008` | Public: built frontend, `GET /api/storage`, SSE `/subscribe` |
+| Port   | What                                                          |
+| ------ | ------------------------------------------------------------- |
+| `3000` | Vite dev server; proxies `/api` and `/subscribe` to :3008     |
+| `3008` | Public: built frontend, `GET /api/storage`, SSE `/subscribe`  |
 | `3009` | Private: `POST /api/storage`. Only the admin view writes here |
 
 Port 3009 has no authentication — it is meant to stay on the drop-zone LAN,
@@ -149,14 +155,20 @@ tests/                   # vitest, backend + frontend
 ## Development
 
 ```bash
-npm run dev          # Vite frontend on :3000 (UI only, no live data)
+npm run dev          # Vite frontend on :3000 (needs the backend running)
 npm run backend      # backend + SSE (nodemon, restarts on change)
 npm run backend:prod # backend without nodemon
-npm run electron:dev # Vite + Electron together
+npm run electron:dev # Vite + Electron together (Electron starts the backend)
 npm test             # unit tests (vitest)
 npm run lint         # eslint --fix over src/
 npm run format       # prettier over the whole repo
 ```
+
+`npm run electron:dev` starts the backend inside the Electron main process, so
+don't also run `npm run backend` alongside it — the ports will clash. Note that
+Electron keeps its state in `app.getPath('userData')/data.json`, not
+`backend/data.json`, so the desktop app and a bare `npm run backend` have
+separate jump runs and settings.
 
 `npm run format` rewrites every file in the repo, and the committed code is not
 currently prettier-clean — expect unrelated churn if you run it. Prefer
