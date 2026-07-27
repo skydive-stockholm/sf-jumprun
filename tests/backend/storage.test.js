@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
-import { createStorage } from '../../backend/utils/storage.js'
+import { createStorage, clearJumprun } from '../../backend/utils/storage.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const testFilePath = path.join(__dirname, 'test-data.json')
@@ -51,5 +51,22 @@ describe('storage', () => {
         fs.writeFileSync(testFilePath, '{broken')
         const result = storage.fetch()
         expect(result).toEqual({})
+    })
+
+    it('clears a stored jump run but keeps the rest', () => {
+        storage.save({
+            jumprun: { start: -0.2, end: 0.2, shift: 0, angle: 30 },
+            staff: { manifestor: 'Alice', jumpLeader: 'Bob', pilot: 'Charlie' },
+        })
+        expect(clearJumprun(storage)).toBe(true)
+        expect(storage.fetch()).toEqual({
+            staff: { manifestor: 'Alice', jumpLeader: 'Bob', pilot: 'Charlie' },
+        })
+    })
+
+    it('leaves storage untouched when no jump run is stored', () => {
+        storage.save({ staff: { manifestor: 'Alice' } })
+        expect(clearJumprun(storage)).toBe(false)
+        expect(storage.fetch()).toEqual({ staff: { manifestor: 'Alice' } })
     })
 })

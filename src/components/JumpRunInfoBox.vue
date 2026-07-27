@@ -32,6 +32,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    draft: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 const DEFAULT_SEPARATION = 'Small groups: 8s · Large groups: 12s'
@@ -58,6 +62,15 @@ const runTime = computed(() => {
 
         <JumpRunWeather />
 
+        <div v-if="draft" :class="$style.draftNote">
+            Draft — not published. The public view stays empty until you publish
+            the jump run.
+        </div>
+
+        <div v-if="!jumprun && !draft" :class="$style.noJumpRun">
+            No jump run set yet
+        </div>
+
         <div v-if="jumprun" :class="$style.jumpRunData">
             <div>
                 <span :class="[$style.indicator, $style.indicatorGreen]"></span>
@@ -75,8 +88,8 @@ const runTime = computed(() => {
         </div>
 
         <div v-if="jumprun" :class="$style.greenLightNote">
-            When the green light turns on, you have 5 seconds to jump
-            (marked by the yellow line)
+            When the green light turns on, you have 5 seconds to jump (marked by
+            the yellow line)
         </div>
 
         <div v-if="jumprun">
@@ -215,6 +228,15 @@ const runTime = computed(() => {
 
 .greenLightNote {
     font-size: 0.8em;
+    color: #b5b5b5;
+}
+
+.draftNote {
+    font-size: 0.8em;
+    color: #facc15;
+}
+
+.noJumpRun {
     color: #b5b5b5;
 }
 

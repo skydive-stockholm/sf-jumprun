@@ -1,5 +1,5 @@
 import express from 'express'
-import { createStorage } from './utils/storage.js'
+import { createStorage, clearJumprun } from './utils/storage.js'
 import { sanitizeStorage } from './utils/sanitize.js'
 import { addClient, sendEventsToAll } from './sse.js'
 import { initSerial } from './serial.js'
@@ -73,11 +73,12 @@ export function startBackend(options = {}) {
 
     if (!fs.existsSync(dataPath)) {
         const originalData = {
-            jumprun: { start: -0.2, end: 0.2, angle: 30, shift: 0 },
             staff: { manifestor: '', jumpLeader: '', pilot: '' },
         }
         fs.writeFileSync(dataPath, JSON.stringify(originalData), 'utf8')
     }
+
+    clearJumprun(storage)
 
     initSerial((jumprun) => {
         const data = storage.fetch()

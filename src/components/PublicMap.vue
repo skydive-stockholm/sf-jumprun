@@ -37,12 +37,7 @@ const data = reactive({
         jumpLeader: '',
         pilot: '',
     },
-    jumprun: {
-        start: -0.2,
-        end: 0.2,
-        shift: 0,
-        angle: 30,
-    },
+    jumprun: null,
 })
 
 const settings = reactive({ mapCenter: '' })
@@ -89,7 +84,7 @@ const groundWindInput = computed(() =>
 )
 
 const exitSeparation = computed(() => {
-    if (!weatherAloft.hasData) return null
+    if (!weatherAloft.hasData || !data.jumprun) return null
     return calculateExitSeparation(
         Object.values(weatherAloft.current),
         groundWindInput.value,
@@ -136,7 +131,7 @@ watch(canopyCircle, replaceCanopyCircleLayer)
 
 let driftBoxLayer = null
 const freefallDrift = computed(() => {
-    if (!weatherAloft.hasData) return null
+    if (!weatherAloft.hasData || !data.jumprun) return null
     return calculateFreefallDrift(
         Object.values(weatherAloft.current),
         groundWindInput.value,
@@ -150,7 +145,7 @@ function replaceDriftBoxLayer() {
     driftBoxLayer = null
 
     const d = freefallDrift.value
-    if (!map.value || !d) return
+    if (!map.value || !d || !data.jumprun) return
 
     const { start, end, shift, angle } = data.jumprun
     driftBoxLayer = L.geoJSON(createDriftBoxData(start, end, shift, angle, d), {
@@ -165,7 +160,10 @@ function replaceDriftBoxLayer() {
     }).addTo(map.value)
 }
 
-watch([freefallDrift, () => ({ ...data.jumprun })], replaceDriftBoxLayer)
+watch(
+    [freefallDrift, () => data.jumprun && { ...data.jumprun }],
+    replaceDriftBoxLayer,
+)
 
 // Yellow start of the run: flown with the green light on before first exit.
 let leadLineLayer = null
@@ -174,7 +172,7 @@ function replaceLeadLineLayer() {
     leadLineLayer = null
 
     const d = freefallDrift.value
-    if (!map.value || !d) return
+    if (!map.value || !d || !data.jumprun) return
 
     const { start, end, shift, angle } = data.jumprun
     const line = createLeadLineData(start, end, shift, angle, d.lead)
@@ -185,11 +183,14 @@ function replaceLeadLineLayer() {
     }).addTo(map.value)
 }
 
-watch([freefallDrift, () => ({ ...data.jumprun })], replaceLeadLineLayer)
+watch(
+    [freefallDrift, () => data.jumprun && { ...data.jumprun }],
+    replaceLeadLineLayer,
+)
 
 // Keep the run in view: long runs can extend well past the map center.
 function recenterOnJumprun() {
-    if (!map.value) return
+    if (!map.value || !data.jumprun) return
     const { start, end, shift, angle } = data.jumprun
     const points = getJumpRunEndpoints(start, end, shift, angle)
     const bounds = L.latLngBounds([
@@ -199,7 +200,7 @@ function recenterOnJumprun() {
     map.value.fitBounds(bounds, { padding: [150, 150], maxZoom: 15.5 })
 }
 
-watch(() => ({ ...data.jumprun }), recenterOnJumprun)
+watch(() => data.jumprun && { ...data.jumprun }, recenterOnJumprun)
 
 async function loadSettings() {
     try {
@@ -259,10 +260,6 @@ function initMapFeatures(m) {
         }).addTo(m)
     })
 
-    jumprunLayer = L.geoJSON(createJumprunData(-0.2, 0.2, 0, 30), {
-        style: { color: '#00ff00', weight: 6, opacity: 1 },
-    }).addTo(m)
-
     const labels = [
         { text: '360\u00B0', angle: 0 },
         { text: '90\u00B0', angle: 90 },
@@ -299,17 +296,20 @@ onMounted(async () => {
             assignSettingsData(res.settings)
         }
 
-        if (!res.jumprun) return
-
-        if (JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)) {
+        if (
+            JSON.stringify(data.jumprun ?? null) ===
+            JSON.stringify(res.jumprun ?? null)
+        ) {
             return
         }
 
-        Object.assign(data.jumprun, res.jumprun)
+        data.jumprun = res.jumprun ? { ...res.jumprun } : null
 
-        if (jumprunLayer) {
-            jumprunLayer.remove()
-        }
+        jumprunLayer?.remove()
+        jumprunLayer = null
+
+        if (!data.jumprun) return
+
         jumprunLayer = L.geoJSON(
             createJumprunData(
                 data.jumprun.start,

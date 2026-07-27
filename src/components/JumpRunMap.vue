@@ -68,6 +68,9 @@ const data = reactive({
 })
 
 const hasUnsavedChanges = ref(false)
+// No jump run is stored until the jump leader saves one: until then the line
+// below is a local draft and the public view stays empty.
+const isDraft = ref(true)
 const isDragging = ref(false)
 let dragHandles = null
 let jumprunLayer = null
@@ -469,6 +472,8 @@ function startMap() {
 
         if (!res.jumprun) return
 
+        isDraft.value = false
+
         if (isDragging.value || hasUnsavedChanges.value) return
 
         if (JSON.stringify(data.jumprun) === JSON.stringify(res.jumprun)) {
@@ -524,6 +529,7 @@ const save = () => {
         body: JSON.stringify(raw),
     })
     hasUnsavedChanges.value = false
+    isDraft.value = false
 }
 </script>
 
@@ -550,6 +556,7 @@ const save = () => {
             <JumpRunInfoBox
                 :staff="data.staff || null"
                 :jumprun="data.jumprun || null"
+                :draft="isDraft"
                 :manifest-phone="settingsData.manifestPhone"
                 :separation="settingsData.separation"
                 :calculated-separation="exitSeparation"
@@ -579,11 +586,11 @@ const save = () => {
         </button>
 
         <button
-            v-if="hasUnsavedChanges"
+            v-if="hasUnsavedChanges || isDraft"
             :class="$style.saveButton"
             @click="save"
         >
-            Save jump run
+            {{ isDraft ? 'Publish jump run' : 'Save jump run' }}
         </button>
 
         <div

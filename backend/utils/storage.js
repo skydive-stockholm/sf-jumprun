@@ -24,4 +24,14 @@ export function createStorage(filePath = defaultPath) {
     }
 }
 
+// The jump run is per-session: a stored one is dropped on boot so the public
+// view stays empty until the jump leader sets it.
+export function clearJumprun(storage) {
+    const data = storage.fetch()
+    if (!('jumprun' in data)) return false
+    delete data.jumprun
+    storage.save(data)
+    return true
+}
+
 export default createStorage()
