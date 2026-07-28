@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { saveStorage } from '../utils/storageApi.js'
 
 const emit = defineEmits(['complete'])
 
@@ -8,16 +9,11 @@ const saveError = ref('')
 
 async function save() {
     try {
-        const res = await fetch('/api/storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                settings: {
-                    mapCenter: mapCenter.value.trim() || '17.426283, 60.284016',
-                },
-            }),
+        await saveStorage({
+            settings: {
+                mapCenter: mapCenter.value.trim() || '17.426283, 60.284016',
+            },
         })
-        if (!res.ok) throw new Error(`server responded ${res.status}`)
     } catch (error) {
         saveError.value = `Could not save the settings: ${error.message}. Try again.`
         return

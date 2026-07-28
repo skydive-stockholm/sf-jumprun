@@ -23,6 +23,7 @@ import {
 } from '../utils/geometry.js'
 import { setMapCenter } from '../data/coordinates.js'
 import { addBaseLayer } from '../utils/baseLayer.js'
+import { saveStorage } from '../utils/storageApi.js'
 import JumpRunInfoBox from './JumpRunInfoBox.vue'
 import { useServerEvents } from '../composables/useServerEvents.js'
 import { useDragHandles } from '../composables/useDragHandles.js'
@@ -523,17 +524,14 @@ onUnmounted(() => {
 })
 
 const save = async () => {
-    const raw = { staff: { ...data.staff }, jumprun: { ...data.jumprun } }
     try {
-        const res = await fetch('/api/storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(raw),
+        await saveStorage({
+            staff: { ...data.staff },
+            jumprun: { ...data.jumprun },
         })
-        if (!res.ok) throw new Error(`server responded ${res.status}`)
     } catch (error) {
         // The run stays a draft so the button keeps offering to publish it.
-        saveError.value = `Could not publish the jump run: ${error.message}. Nothing was saved — try again.`
+        saveError.value = `Could not publish the jump run: ${error.message}. Publishing only works on the drop-zone network — nothing was saved.`
         return
     }
     saveError.value = ''

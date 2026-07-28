@@ -4,6 +4,7 @@ import {
     useWeatherAloft,
     WIND_ALTITUDES,
 } from '../composables/useWeatherAloft.js'
+import { saveStorage } from '../utils/storageApi.js'
 
 const props = defineProps({
     staff: { type: Object, required: true },
@@ -103,17 +104,9 @@ async function save() {
     }
 
     try {
-        const res = await fetch('/api/storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                staff: staffData,
-                settings: settingsPayload,
-            }),
-        })
-        if (!res.ok) throw new Error(`server responded ${res.status}`)
+        await saveStorage({ staff: staffData, settings: settingsPayload })
     } catch (error) {
-        saveError.value = `Could not save settings: ${error.message}. Nothing was saved — try again.`
+        saveError.value = `Could not save settings: ${error.message}. Settings can only be changed on the drop-zone network — nothing was saved.`
         return
     }
 

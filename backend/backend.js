@@ -59,13 +59,11 @@ export function startBackend(options = {}) {
         res.send(data)
     })
 
-    // Writes are served on both ports. The admin view has to reach them on the
-    // same origin it was loaded from: a reverse proxy in front of the app only
-    // forwards the public port, so a browser tab on jumprun.skydive.se cannot
-    // open a connection to the private port at all.
-    const writeHandler = createWriteHandler(storage)
-    publicApp.post('/api/storage', writeHandler)
-    privateApp.post('/api/storage', writeHandler)
+    // Writes live on the private port only. The public port is read-only so
+    // the copy published on the open internet cannot be written to: only
+    // clients that can reach the private port — i.e. the drop-zone network —
+    // may change the jump run.
+    privateApp.post('/api/storage', createWriteHandler(storage))
 
     publicApp.get('/subscribe', (req, res) => {
         addClient(req, res)
