@@ -71,6 +71,7 @@ const hasUnsavedChanges = ref(false)
 // No jump run is stored until the jump leader saves one: until then the line
 // below is a local draft and the public view stays empty.
 const isDraft = ref(true)
+const saveError = ref('')
 const isDragging = ref(false)
 let dragHandles = null
 let jumprunLayer = null
@@ -521,13 +522,21 @@ onUnmounted(() => {
     leadLineLayer = null
 })
 
-const save = () => {
+const save = async () => {
     const raw = { staff: { ...data.staff }, jumprun: { ...data.jumprun } }
-    fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(raw),
-    })
+    try {
+        const res = await fetch('/api/storage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(raw),
+        })
+        if (!res.ok) throw new Error(`server responded ${res.status}`)
+    } catch (error) {
+        // The run stays a draft so the button keeps offering to publish it.
+        saveError.value = `Could not publish the jump run: ${error.message}. Nothing was saved — try again.`
+        return
+    }
+    saveError.value = ''
     hasUnsavedChanges.value = false
     isDraft.value = false
 }
@@ -592,6 +601,8 @@ const save = () => {
         >
             {{ isDraft ? 'Publish jump run' : 'Save jump run' }}
         </button>
+
+        <div v-if="saveError" :class="$style.saveError">{{ saveError }}</div>
 
         <div
             v-if="showSuggestionInfo"
@@ -901,6 +912,21 @@ const save = () => {
 
 .saveButton:hover {
     background: #6aa0ff;
+}
+
+.saveError {
+    position: fixed;
+    z-index: 1000;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 420px;
+    padding: 10px 16px;
+    background: #e5484d;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
 }
 
 .modalOverlay {

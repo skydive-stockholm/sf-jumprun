@@ -29,6 +29,7 @@ const windRows = reactive(
     ),
 )
 const saved = ref(false)
+const saveError = ref('')
 
 function prefillWindRows(source) {
     WIND_ALTITUDES.forEach((alt) => {
@@ -101,19 +102,22 @@ async function save() {
         manualWindsAloft: manualWinds.value ? buildManualWinds() : null,
     }
 
-    await Promise.all([
-        fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
+    try {
+        const res = await fetch('/api/storage', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ staff: staffData }),
-        }),
-        fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ settings: settingsPayload }),
-        }),
-    ])
+            body: JSON.stringify({
+                staff: staffData,
+                settings: settingsPayload,
+            }),
+        })
+        if (!res.ok) throw new Error(`server responded ${res.status}`)
+    } catch (error) {
+        saveError.value = `Could not save settings: ${error.message}. Nothing was saved — try again.`
+        return
+    }
 
+    saveError.value = ''
     emit('save', { staff: staffData, settings: settingsPayload })
 
     saved.value = true
@@ -308,6 +312,10 @@ async function save() {
                     </label>
                 </fieldset>
 
+                <p v-if="saveError" :class="$style.saveError">
+                    {{ saveError }}
+                </p>
+
                 <div :class="$style.actions">
                     <button :class="$style.saveButton" type="submit">
                         {{ saved ? 'Saved!' : 'Save' }}
@@ -475,6 +483,15 @@ async function save() {
 
 .saveButton:hover {
     background: #1e2ba0;
+}
+
+.saveError {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fdeaea;
+    color: #a3181c;
+    font-size: 13px;
 }
 
 .cancelButton {

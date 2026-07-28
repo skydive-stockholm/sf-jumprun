@@ -42,14 +42,15 @@ A skydiving jump run visualization app for a Swedish drop zone (Skydive Stockhol
 
 ### Backend (Express + SerialPort)
 - **`backend/backend.js`** — Exports `startBackend(options)`. Two Express servers:
-  - **Public (port 3008):** serves built frontend from `dist/`, SSE endpoint `/subscribe`, GET `/api/storage`
-  - **Private (port 3009):** POST `/api/storage` for writing data
+  - **Public (port 3008):** serves built frontend from `dist/`, SSE endpoint `/subscribe`, GET + POST `/api/storage`
+  - **Private (port 3009):** the same POST `/api/storage`, kept for LAN tooling
+  - The frontend always writes on its own origin: a reverse proxy in front of the app only forwards 3008, so a remote browser tab cannot reach 3009
 - **`backend/utils/storage.js`** — JSON file-based storage reading/writing `backend/data.json`
 - Reads serial data from a hardware device (specific serial number `2096326F4D53`), parses jump run parameters (start, end, shift, angle), and broadcasts changes via SSE
 - Also watches `backend/data.json` for external modifications and pushes updates to all SSE clients
 
 ### Data Flow
-Hardware serial device → backend parses → writes `data.json` → fs.watch triggers → SSE broadcast → frontend updates map. Admin panel (localhost) → POST to private port 3009 → saves to `data.json` → same broadcast path.
+Hardware serial device → backend parses → writes `data.json` → fs.watch triggers → SSE broadcast → frontend updates map. Admin panel → POST `/api/storage` on its own origin → saves to `data.json` → same broadcast path.
 
 ## Settings
 - Mapbox API key and map center are configured via the **Settings panel** in the admin UI (stored in `data.json`)

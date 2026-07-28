@@ -4,18 +4,26 @@ import { ref } from 'vue'
 const emit = defineEmits(['complete'])
 
 const mapCenter = ref('17.426283, 60.284016')
+const saveError = ref('')
 
 async function save() {
-    await fetch(`${location.protocol}//${location.hostname}:3009/api/storage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            settings: {
-                mapCenter: mapCenter.value.trim() || '17.426283, 60.284016',
-            },
-        }),
-    })
+    try {
+        const res = await fetch('/api/storage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                settings: {
+                    mapCenter: mapCenter.value.trim() || '17.426283, 60.284016',
+                },
+            }),
+        })
+        if (!res.ok) throw new Error(`server responded ${res.status}`)
+    } catch (error) {
+        saveError.value = `Could not save the settings: ${error.message}. Try again.`
+        return
+    }
 
+    saveError.value = ''
     emit('complete')
 }
 </script>
@@ -41,6 +49,8 @@ async function save() {
                         Default: ESKG Gryttjom Airfield
                     </span>
                 </label>
+
+                <p v-if="saveError" :class="$style.error">{{ saveError }}</p>
 
                 <button :class="$style.button" type="submit">
                     Get started
@@ -135,5 +145,14 @@ async function save() {
 
 .button:hover {
     background: #3a7ae4;
+}
+
+.error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fdeaea;
+    color: #a3181c;
+    font-size: 13px;
 }
 </style>

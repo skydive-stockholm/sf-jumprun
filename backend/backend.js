@@ -9,6 +9,15 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+export function createWriteHandler(storage) {
+    return (req, res) => {
+        const data = storage.fetch()
+        const sanitized = sanitizeStorage(req.body)
+        storage.save({ ...data, ...sanitized })
+        res.send({ message: 'success' })
+    }
+}
+
 export function startBackend(options = {}) {
     const dataPath = options.dataPath || path.join(__dirname, 'data.json')
     const distPath = options.distPath || path.join(__dirname, '..', 'dist')
@@ -50,12 +59,13 @@ export function startBackend(options = {}) {
         res.send(data)
     })
 
-    privateApp.post('/api/storage', (req, res) => {
-        const data = storage.fetch()
-        const sanitized = sanitizeStorage(req.body)
-        storage.save({ ...data, ...sanitized })
-        res.send({ message: 'success' })
-    })
+    // Writes are served on both ports. The admin view has to reach them on the
+    // same origin it was loaded from: a reverse proxy in front of the app only
+    // forwards the public port, so a browser tab on jumprun.skydive.se cannot
+    // open a connection to the private port at all.
+    const writeHandler = createWriteHandler(storage)
+    publicApp.post('/api/storage', writeHandler)
+    privateApp.post('/api/storage', writeHandler)
 
     publicApp.get('/subscribe', (req, res) => {
         addClient(req, res)

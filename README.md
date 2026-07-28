@@ -98,14 +98,19 @@ before showing the map.
 
 ### Ports
 
-| Port   | What                                                          |
-| ------ | ------------------------------------------------------------- |
-| `3000` | Vite dev server; proxies `/api` and `/subscribe` to :3008     |
-| `3008` | Public: built frontend, `GET /api/storage`, SSE `/subscribe`  |
-| `3009` | Private: `POST /api/storage`. Only the admin view writes here |
+| Port   | What                                                                     |
+| ------ | ------------------------------------------------------------------------ |
+| `3000` | Vite dev server; proxies `/api` and `/subscribe` to :3008                |
+| `3008` | Built frontend, `GET`/`POST /api/storage`, SSE `/subscribe`              |
+| `3009` | Same `POST /api/storage`, for tooling on the drop-zone LAN               |
 
-Port 3009 has no authentication — it is meant to stay on the drop-zone LAN,
-not on the open internet.
+The admin view writes on the same origin it was loaded from (:3008), because a
+reverse proxy in front of the app only forwards that one port — a browser tab
+on `jumprun.skydive.se` cannot open a connection to :3009.
+
+Neither port has authentication: anything that can reach the app can also write
+to it. Keep the write path off the open internet, or put authentication in the
+proxy in front of it.
 
 ### The hardware controller (optional)
 
@@ -237,7 +242,7 @@ up to come back after a power cut. See [RESILIENCE.md](RESILIENCE.md).
 
 Hardware serial device → backend parses → writes `data.json` → `fs.watch`
 triggers → SSE broadcast → every connected map updates. The admin view posts to
-:3009, which writes the same file and takes the same broadcast path.
+`/api/storage`, which writes the same file and takes the same broadcast path.
 
 See [CLAUDE.md](CLAUDE.md) for a fuller breakdown of the frontend, Electron,
 and backend layers.

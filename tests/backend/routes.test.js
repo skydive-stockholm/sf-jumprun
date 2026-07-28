@@ -1,5 +1,48 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { sanitizeStorage } from '../../backend/utils/sanitize.js'
+import { createWriteHandler } from '../../backend/backend.js'
+
+describe('createWriteHandler', () => {
+    function setup(stored = {}) {
+        const storage = {
+            fetch: vi.fn(() => stored),
+            save: vi.fn(),
+        }
+        return { storage, handler: createWriteHandler(storage) }
+    }
+
+    it('merges the sanitized body into the stored data', () => {
+        const { storage, handler } = setup({
+            staff: { manifestor: 'A', jumpLeader: 'B', pilot: 'C' },
+            settings: { mapCenter: '1, 2' },
+        })
+        const res = { send: vi.fn() }
+
+        handler(
+            {
+                body: {
+                    jumprun: { start: '-0.3', end: 0.4, shift: 0, angle: 45 },
+                },
+            },
+            res,
+        )
+
+        expect(storage.save).toHaveBeenCalledWith({
+            staff: { manifestor: 'A', jumpLeader: 'B', pilot: 'C' },
+            settings: { mapCenter: '1, 2' },
+            jumprun: { start: -0.3, end: 0.4, shift: 0, angle: 45 },
+        })
+        expect(res.send).toHaveBeenCalledWith({ message: 'success' })
+    })
+
+    it('drops unknown fields', () => {
+        const { storage, handler } = setup()
+
+        handler({ body: { hacker: 'drop table' } }, { send: vi.fn() })
+
+        expect(storage.save).toHaveBeenCalledWith({})
+    })
+})
 
 describe('sanitizeStorage', () => {
     it('sanitizes staff fields to strings', () => {
