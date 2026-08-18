@@ -81,7 +81,8 @@ changes when you save.
 ### Settings
 
 The gear button in `/admin` opens the settings panel. Everything there is
-stored in `backend/data.json` and shared with the public view:
+stored in `backend/data.json` and shared with the public view, except the
+notification toggle, which is per device:
 
 | Setting                        | Used for                                         |
 | ------------------------------ | ------------------------------------------------ |
@@ -92,9 +93,16 @@ stored in `backend/data.json` and shared with the public view:
 | Aircraft speed on jump run     | Time-on-run and separation maths                 |
 | Manual winds aloft             | Override the weather API when it's wrong or down |
 | Map center                     | `lng, lat` of the drop zone (defaults to ESKG)   |
+| Suggestion notifications       | Notify this device when the suggestion moves     |
 
 In the Electron app, a first-launch onboarding screen asks for the map center
 before showing the map.
+
+Suggestion notifications are a browser permission, so they are stored in
+`localStorage` on the device you enable them on rather than in `data.json`, and
+they stay quiet on purpose: only for changes past the significance thresholds,
+only when the jump run you have set does not already match, and only while the
+app is off screen.
 
 ### Ports
 

@@ -30,6 +30,7 @@ A skydiving jump run visualization app for a Swedish drop zone (Skydive Stockhol
 - **`src/components/JumpRunWeather.vue`** — Fetches and displays ground weather + winds aloft at 600m/1500m/3000m from `insidan.skydive.se` API
 - **`src/utils/geometry.js`** — Turf.js helpers for drawing map features: circles (nautical mile rings), axis lines, jump run arrow with directional indicator
 - **`src/composables/useWeather.js`** / **`useWeatherAloft.js`** — Vue composables fetching weather data on intervals (ground: 1min, aloft: 15min)
+- **`src/composables/useJumprunNotifications.js`** — Native browser notification when the suggested jump run changes. Opt-in per device (localStorage), and kept quiet: only for changes past the significance thresholds, only when the set jump run does not already match, only while the app is off screen, coalesced over a 30s settle window with a 10min floor between notices
 - **`src/data/coordinates.js`** — Map center from `VITE_MAP_CENTER` env var (defaults to ESKG Gryttjom)
 
 ### Electron (Desktop App)
@@ -55,6 +56,7 @@ Hardware serial device → backend parses → writes `data.json` → fs.watch tr
 ## Settings
 - Mapbox API key and map center are configured via the **Settings panel** in the admin UI (stored in `data.json`)
 - On first launch, an onboarding screen prompts for these settings
+- Suggestion notifications are toggled in the same panel but stored per device in `localStorage`, not in `data.json`
 - `.env` file is **deprecated** — only Azure credentials remain there (`AZURE_STORAGE_ACC`, `AZURE_STORAGE_TABLE`, `AZURE_SAS_TOKEN`)
 
 ## Code Style

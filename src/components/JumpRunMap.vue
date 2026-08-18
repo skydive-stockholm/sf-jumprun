@@ -32,6 +32,7 @@ import {
     applyManualWindsSetting,
 } from '../composables/useWeatherAloft.js'
 import { useWeather } from '../composables/useWeather.js'
+import { watchSuggestionChanges } from '../composables/useJumprunNotifications.js'
 import {
     calculateJumpRunSuggestion,
     calculateExitSeparation,
@@ -289,6 +290,11 @@ watch(
     replaceSuggestionLayer,
 )
 
+const stopSuggestionNotifications = watchSuggestionChanges(
+    suggestion,
+    () => data.jumprun,
+)
+
 // Keep the run in view: long runs can extend well past the map center.
 function recenterOnJumprun() {
     if (!map.value || isDragging.value) return
@@ -514,6 +520,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+    stopSuggestionNotifications()
     serverEventsClose?.()
     dragHandles?.remove()
     map.value?.remove()

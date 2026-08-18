@@ -5,6 +5,11 @@ import {
     WIND_ALTITUDES,
 } from '../composables/useWeatherAloft.js'
 import { saveStorage } from '../utils/storageApi.js'
+import {
+    useJumprunNotifications,
+    enableNotifications,
+    disableNotifications,
+} from '../composables/useJumprunNotifications.js'
 
 const props = defineProps({
     staff: { type: Object, required: true },
@@ -31,6 +36,19 @@ const windRows = reactive(
 )
 const saved = ref(false)
 const saveError = ref('')
+
+// Notifications are a per-device browser permission, so they are toggled here
+// and applied immediately instead of being saved with the shared settings.
+const notifications = useJumprunNotifications()
+
+async function toggleNotifications(event) {
+    if (event.target.checked) {
+        const granted = await enableNotifications()
+        event.target.checked = granted
+    } else {
+        disableNotifications()
+    }
+}
 
 function prefillWindRows(source) {
     WIND_ALTITUDES.forEach((alt) => {
@@ -243,6 +261,37 @@ async function save() {
                         />
                         <span :class="$style.hint">knots</span>
                     </label>
+                </fieldset>
+
+                <fieldset
+                    v-if="notifications.supported"
+                    :class="$style.section"
+                >
+                    <legend :class="$style.sectionTitle">Notifications</legend>
+
+                    <label :class="$style.checkboxField">
+                        <input
+                            type="checkbox"
+                            :checked="notifications.enabled"
+                            :disabled="notifications.permission === 'denied'"
+                            @change="toggleNotifications"
+                        />
+                        <span :class="$style.label">
+                            Notify me when the suggested jump run changes
+                        </span>
+                    </label>
+                    <span
+                        v-if="notifications.permission === 'denied'"
+                        :class="$style.hint"
+                    >
+                        Notifications are blocked for this site. Allow them in
+                        the browser settings first.
+                    </span>
+                    <span v-else :class="$style.hint">
+                        Only on this device, and only when the suggestion has
+                        actually moved and the app is not on screen — never for
+                        small changes.
+                    </span>
                 </fieldset>
 
                 <fieldset :class="$style.section">
