@@ -197,7 +197,17 @@ function recenterOnJumprun() {
         [points.start[1], points.start[0]],
         [points.end[1], points.end[0]],
     ])
-    map.value.fitBounds(bounds, { padding: [150, 150], maxZoom: 15.5 })
+    // Padding in pixels, so it has to stay a fraction of the map on a phone:
+    // a flat 150 leaves a 390px-wide viewport almost nothing to fit into.
+    const size = map.value.getSize()
+    const padding = [
+        Math.round(Math.min(150, size.x * 0.15)),
+        Math.round(Math.min(150, size.y * 0.15)),
+    ]
+    // animate: false because a re-fit often lands while an earlier zoom
+    // animation is still running, and Leaflet drops it — leaving the map framed
+    // on the previous run.
+    map.value.fitBounds(bounds, { padding, maxZoom: 15.5, animate: false })
 }
 
 watch(() => data.jumprun && { ...data.jumprun }, recenterOnJumprun)
@@ -281,11 +291,25 @@ function initMapFeatures(m) {
 
 let serverEventsClose
 
+// The info box grows as the weather and legends arrive, which shrinks the map
+// without a window resize. Leaflet only watches the window, so it has to be
+// told, or the jump run is left hanging off the bottom of a phone screen.
+let mapResizeObserver
+function observeMapSize(element) {
+    if (typeof ResizeObserver === 'undefined') return
+    mapResizeObserver = new ResizeObserver(() => {
+        map.value?.invalidateSize()
+        recenterOnJumprun()
+    })
+    mapResizeObserver.observe(element)
+}
+
 onMounted(async () => {
     await loadSettings()
     map.value = initMap()
 
     initMapFeatures(map.value)
+    observeMapSize(document.getElementById('map'))
 
     const { close } = useServerEvents(res => {
         if (res.staff) {
@@ -328,6 +352,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+    mapResizeObserver?.disconnect()
     serverEventsClose?.()
     map.value?.remove()
     canopyCircleLayer = null
