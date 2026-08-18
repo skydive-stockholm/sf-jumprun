@@ -380,7 +380,7 @@ function initMap() {
     setMapCenter(center)
 
     let zoom = 13.2
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 900) {
         zoom = 12.2
     }
 
@@ -853,7 +853,7 @@ const save = async () => {
 }
 
 /* Info box as a full-height left column so the map never renders under it */
-@media (min-width: 769px) {
+@media (min-width: 900px) {
     .mapContainer {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -864,7 +864,7 @@ const save = async () => {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 899px) {
     .compass {
         display: none;
     }
@@ -1124,7 +1124,7 @@ const save = async () => {
 }
 
 /* Move fixed overlays off the info box sidebar onto the map */
-@media (min-width: 769px) {
+@media (min-width: 900px) {
     .connectionMessage {
         left: 452px;
     }

@@ -98,7 +98,7 @@ const runTime = computed(() => {
             <span>{{ jumprun.angle }}&deg;</span>
         </div>
 
-        <div v-if="runTime">
+        <div v-if="runTime" :class="$style.runTime">
             <strong>Time on run:</strong>
             <span>&nbsp;</span>
             <span>
@@ -187,7 +187,7 @@ const runTime = computed(() => {
     font-size: 19px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
     .infoBox {
         width: 442px;
         height: 100%;
@@ -197,12 +197,25 @@ const runTime = computed(() => {
     }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 899px) {
     .infoBox {
         position: relative;
         font-size: 14px;
         width: 100%;
-        gap: 12px;
+        gap: 10px;
+        padding: 12px 10px;
+        /* Never let the panel push the map into a letterbox, however much
+           there is to say */
+        max-height: 45vh;
+        overflow-y: auto;
+    }
+
+    /* The map is the point on a phone. Keep the numbers a jumper reads before
+       boarding and drop what is learn-once prose or manifest-desk detail. */
+    .greenLightNote,
+    .canopyLegendText,
+    .runTime {
+        display: none;
     }
 }
 
@@ -246,9 +259,15 @@ const runTime = computed(() => {
     gap: 4px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 899px) {
     .staffRow {
         display: none;
+    }
+
+    /* Only the phone number survives on a phone, so let it sit in the panel
+       directly instead of leaving an empty row behind */
+    .staffContainer {
+        display: contents;
     }
 }
 
