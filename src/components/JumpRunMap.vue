@@ -356,9 +356,9 @@ function initMap() {
     const center = getMapCenter()
     setMapCenter(center)
 
-    let zoom = 13.5
+    let zoom = 13.2
     if (window.innerWidth < 768) {
-        zoom = 12.5
+        zoom = 12.2
     }
 
     const m = L.map('map', {
