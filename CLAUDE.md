@@ -18,7 +18,7 @@ A skydiving jump run visualization app for a Swedish drop zone (Skydive Stockhol
 - **Lint:** `npm run lint`
 - **Format:** `npm run format`
 - **Backend deps:** `cd backend && npm install` (separate package.json for standalone usage)
-- **Deploy/startup:** `bash startup.ps1` — resets to origin/main, builds, installs deps, starts backend
+- **Deploy:** `bash startup.ps1` — resets to origin/main, builds, installs deps, starts backend. Preserves `.env` and `backend/data.json` through the clean. Not the boot path — boot uses the Scheduled Task from `scripts/install-autostart.ps1`
 - **Upload to Azure:** `pwsh uploadtoazure.ps1` — pushes `backend/data.json` to Azure Table Storage
 
 ## Architecture

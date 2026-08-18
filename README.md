@@ -227,9 +227,15 @@ Notes:
 
 ## Deploying to the drop-zone machine
 
-`startup.ps1` (a bash script despite the name) is what the display machine
-runs: it hard-resets to `origin/main`, reinstalls, rebuilds, and starts the
-backend. It **discards local changes**, keeping only `.env`.
+`startup.ps1` (a bash script despite the name) is the **deploy** script: it
+hard-resets to `origin/main`, reinstalls, rebuilds, and starts the backend. It
+**discards local changes**, keeping only `.env` and `backend/data.json` (the
+settings — Mapbox key, map center, altitudes — plus staff). It aborts on the
+first failed step rather than starting the backend on a half-built `dist/`.
+
+It is not the boot path: on boot the machine runs the supervised Scheduled Task
+(see [RESILIENCE.md](RESILIENCE.md)), which restarts the backend if it exits and
+needs no network. Run `startup.ps1` when you deploy, not at startup.
 
 ## Fail-safe / recovery
 
